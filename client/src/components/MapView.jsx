@@ -6,7 +6,7 @@ import axios from "axios";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-const socket = io("http://localhost:5001"); // ✅ Correct backend URL
+const socket = io("https://real-time-vehicle-tracking.onrender.com"); // ✅ Correct backend URL
 
 const carIcon = new L.Icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854894.png",
