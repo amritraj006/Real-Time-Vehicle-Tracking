@@ -10,24 +10,34 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 
 // ✅ MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" },
-});
+// ✅ Define FRONTEND URL
+const FRONTEND_URL = "https://real-time-vehicle-tracking.onrender.com";
 
-// ✅ Insert sample vehicles if DB empty
+// ✅ Common CORS options
+const corsOptions = {
+  origin: FRONTEND_URL,
+  methods: ["GET", "POST"],
+  credentials: true,
+};
+
+// ✅ Apply CORS for REST API
+app.use(cors(corsOptions));
+
+// ✅ Create HTTP server (required for Socket.io)
+const server = http.createServer(app);
+
+// ✅ Initialize Socket.io with same CORS options
+const io = new Server(server, { cors: corsOptions });
+
+// ✅ MongoDB seeding (if empty)
 const initializeVehicles = async () => {
   try {
     const count = await Vehicle.countDocuments();
@@ -44,23 +54,21 @@ const initializeVehicles = async () => {
 };
 initializeVehicles();
 
-// ✅ Simulate location updates every 5 seconds
+// ✅ Simulate vehicle location updates every 5s
 setInterval(async () => {
   try {
     const vehicles = await Vehicle.find();
     for (const v of vehicles) {
-      const newLat = v.lat + (Math.random() - 0.5) * 0.01;
-      const newLng = v.lng + (Math.random() - 0.5) * 0.01;
-
-      v.lat = newLat;
-      v.lng = newLng;
+      v.lat += (Math.random() - 0.5) * 0.01;
+      v.lng += (Math.random() - 0.5) * 0.01;
       v.updatedAt = new Date();
       await v.save();
 
+      // Send live update to frontend
       io.emit("locationUpdate", {
         vehicleId: v.vehicleId,
-        lat: newLat,
-        lng: newLng,
+        lat: v.lat,
+        lng: v.lng,
       });
     }
   } catch (err) {
@@ -68,7 +76,7 @@ setInterval(async () => {
   }
 }, 5000);
 
-// ✅ Get all vehicles for initial map load
+// ✅ REST endpoint to get all vehicles
 app.get("/vehicles", async (req, res) => {
   try {
     const vehicles = await Vehicle.find();
@@ -78,6 +86,7 @@ app.get("/vehicles", async (req, res) => {
   }
 });
 
+// ✅ Start the server
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () =>
   console.log(`🚀 Server running on http://localhost:${PORT}`)
