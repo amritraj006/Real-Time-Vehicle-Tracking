@@ -20,7 +20,8 @@ const MapView = () => {
 
   useEffect(() => {
     // Fetch all vehicles
-    axios.get("api/vehicles").then((res) => setVehicles(res.data));
+    axios.get("axios.get("https://real-time-vehicle-tracking-1.onrender.com/vehicles")
+/vehicles").then((res) => setVehicles(res.data));
 
     // Listen for live updates
     socket.on("locationUpdate", (data) => {
