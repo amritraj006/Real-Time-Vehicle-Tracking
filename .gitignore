@@ -1,0 +1,10 @@
+# Ignore node_modules for backend
+server/node_modules/
+
+# Ignore backend environment files
+server/.env
+
+# Ignore common files
+.DS_Store
+logs/
+*.log
