@@ -24,7 +24,7 @@ mongoose
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" },
+  cors: { origin: "https://real-time-vehicle-tracking-1.onrender.com" },
 });
 
 // ✅ Insert sample vehicles if DB empty
