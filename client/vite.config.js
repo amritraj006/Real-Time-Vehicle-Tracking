@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       // 🛠️ When frontend calls `/api`, forward it to backend
       '/api': {
-        target: 'http://localhost:5001', // your backend server
+        target: 'https://real-time-vehicle-tracking.onrender.com', // your backend server
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''), // remove `/api` prefix
