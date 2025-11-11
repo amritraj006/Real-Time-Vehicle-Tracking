@@ -5,6 +5,7 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { useAppContext } from "../contexts/AppContext";
 
 const socket = io("http://localhost:5001"); // ✅ Correct backend URL
 
@@ -15,10 +16,11 @@ const carIcon = new L.Icon({
 
 const MapView = () => {
   const [vehicles, setVehicles] = useState([]);
+  const { url } = useAppContext();
 
   useEffect(() => {
     // Fetch all vehicles
-    axios.get("api/vehicles").then((res) => setVehicles(res.data));
+    axios.get(`${url}/vehicles`).then((res) => setVehicles(res.data));
 
     // Listen for live updates
     socket.on("locationUpdate", (data) => {
