@@ -4,22 +4,41 @@ import http from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
-import connectDB from "./config/db.js"; // ✅ Import MongoDB connection
+import connectDB from "./config/db.js"; // ✅ MongoDB connection
 import Vehicle from "./models/vehicleModel.js";
 
 dotenv.config();
 connectDB(); // ✅ Connect to MongoDB
 
 const app = express();
-app.use(cors());
+
+// ✅ Proper CORS setup for Render & local development
+app.use(
+  cors({
+    origin: [
+      "https://real-time-vehicle-tracking-1.onrender.com", // frontend on Render
+      "http://localhost:5173", // local dev (Vite default port)
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
+// ✅ Create HTTP server and attach Socket.io
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" },
+  cors: {
+    origin: [
+      "https://real-time-vehicle-tracking-1.onrender.com",
+      "http://localhost:5173",
+    ],
+    methods: ["GET", "POST"],
+  },
 });
 
-// ✅ Insert sample vehicles if DB empty
+// ✅ Initialize DB with sample vehicles if empty
 const initializeVehicles = async () => {
   try {
     const count = await Vehicle.countDocuments();
@@ -36,7 +55,7 @@ const initializeVehicles = async () => {
 };
 initializeVehicles();
 
-// ✅ Simulate location updates every 5 seconds
+// ✅ Simulate live vehicle updates every 5 seconds
 setInterval(async () => {
   try {
     const vehicles = await Vehicle.find();
@@ -49,6 +68,7 @@ setInterval(async () => {
       v.updatedAt = new Date();
       await v.save();
 
+      // Emit update to all clients
       io.emit("locationUpdate", {
         vehicleId: v.vehicleId,
         lat: newLat,
@@ -60,17 +80,19 @@ setInterval(async () => {
   }
 }, 5000);
 
-// ✅ Get all vehicles for initial map load
+// ✅ REST endpoint for initial vehicle data
 app.get("/vehicles", async (req, res) => {
   try {
     const vehicles = await Vehicle.find();
     res.json(vehicles);
   } catch (err) {
+    console.error("❌ Error fetching vehicles:", err);
     res.status(500).json({ message: "Error fetching vehicles" });
   }
 });
 
+// ✅ Render requires binding to process.env.PORT
 const PORT = process.env.PORT || 5001;
-server.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
+server.listen(PORT, "0.0.0.0", () =>
+  console.log(`🚀 Server running on port ${PORT}`)
 );
