@@ -5,7 +5,7 @@ const AppContext = createContext();
 
 // 2️⃣ Create the provider component
 export const AppProvider = ({ children }) => {
-  const url = "http://localhost:5001";
+  const url = "https://real-time-vehicle-tracking.onrender.com";
 
   return (
     <AppContext.Provider value={{ url }}>
