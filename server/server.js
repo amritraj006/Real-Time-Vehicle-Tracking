@@ -2,25 +2,17 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
-import mongoose from "mongoose";
-import Vehicle from "./models/vehicleModel.js";
-import cors from "cors";
 import dotenv from "dotenv";
+import cors from "cors";
+import connectDB from "./config/db.js"; // ✅ Import MongoDB connection
+import Vehicle from "./models/vehicleModel.js";
 
 dotenv.config();
+connectDB(); // ✅ Connect to MongoDB
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// ✅ MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
 const server = http.createServer(app);
 const io = new Server(server, {

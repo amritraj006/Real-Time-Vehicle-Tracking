@@ -15,7 +15,7 @@ mongoose.connect(MONGO_URI, {
 
 const insertVehicle = async () => {
   try {
-    const vehicleId = "V087"; // change ID if you want to add another
+    const vehicleId = "V6775"; // change ID if you want to add another
     const existing = await Vehicle.findOne({ vehicleId });
 
     if (existing) {
@@ -25,7 +25,7 @@ const insertVehicle = async () => {
 
     await Vehicle.create({
       vehicleId,
-      name: "Bike 2",
+      name: "Amrit Bike",
       lat: 30.6139, // sample coordinates
       lng: 27.2090,
     });
