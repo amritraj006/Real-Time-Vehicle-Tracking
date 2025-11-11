@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js"; // ✅ MongoDB connection
 import Vehicle from "./models/vehicleModel.js";
+import { serve } from "inngest/express";
+import { inngest, functions } from "./inngest/index.js";
 
 dotenv.config();
 connectDB(); // ✅ Connect to MongoDB
@@ -79,6 +81,9 @@ setInterval(async () => {
     console.error("❌ Error updating vehicle locations:", err);
   }
 }, 5000);
+
+app.get("/", (req, res) => res.send("API is running"));
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // ✅ REST endpoint for initial vehicle data
 app.get("/vehicles", async (req, res) => {
