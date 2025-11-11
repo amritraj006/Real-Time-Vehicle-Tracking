@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import play_icon from "../assets/play_icon.png";
 import pause_icon from "../assets/pause_icon.png";
 import { useNavigate } from "react-router-dom";
-import "../styles/landingPage.css";
+import "../styles/LandingPage.css";
 
 const LandingPage = () => {
   const navigate = useNavigate();
