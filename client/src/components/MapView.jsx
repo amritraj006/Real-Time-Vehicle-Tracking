@@ -26,6 +26,8 @@ const carIcon = new L.Icon({
   iconSize: [32, 32],
 });
 
+// ✅ Main MapView component
+
 const MapView = () => {
   const [vehicles, setVehicles] = useState([]);
   const { url } = useAppContext(); // url provided by your AppContext
