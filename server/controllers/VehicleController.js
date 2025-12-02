@@ -1,6 +1,5 @@
 // Correct import with exact filename
-import Vehicle from "../models/VehicleModel.js";
-
+import Vehicle from "../models/VehicleModel";
 
 
 // ✅ Add new vehicle

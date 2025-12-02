@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 
-import Vehicle from "./models/vehicleModel.js";
+import Vehicle from "./models/VehicleModel.js";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
@@ -27,7 +27,6 @@ app.use(
 
 
 app.use(express.json());
-
 
 const server = http.createServer(app);
 const io = new Server(server, {

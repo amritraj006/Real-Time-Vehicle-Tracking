@@ -1,5 +1,6 @@
 import express from "express";
-import { addVehicle, getVehiclesByUser, deleteVehicle } from "../controllers/vehicleController.js";
+import { addVehicle, getVehiclesByUser } from '../controllers/vehicleController.js'
+import { deleteVehicle } from "../controllers/vehicleController.js";
 
 const router = express.Router();
 
