@@ -17,5 +17,7 @@ const vehicleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Vehicle = mongoose.model("Vehicle", vehicleSchema);
+// ✅ Check if model already exists
+const Vehicle = mongoose.models.Vehicle || mongoose.model("Vehicle", vehicleSchema);
+
 export default Vehicle;

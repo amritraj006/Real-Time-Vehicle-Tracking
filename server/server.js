@@ -4,10 +4,12 @@ import { Server } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
-import vehicleRoutes from "./routes/vehicleRoutes.js";
+
 import Vehicle from "./models/vehicleModel.js";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
+import vehicleRoutes from "./routes/vehicleRoutes.js";
+
 
 dotenv.config();
 connectDB();
@@ -17,14 +19,15 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: [
-      "https://real-time-vehicle-tracking-1.onrender.com",
-      "http://localhost:5173",
-    ],
-    methods: ["GET", "POST"],
-    credentials: true,
+    origin: "*",
+    methods: "GET,POST,PUT,DELETE",
   })
 );
+
+
+
+app.use(express.json());
+
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -34,6 +37,8 @@ const io = new Server(server, {
       "http://localhost:5173",
     ],
     methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+
   },
 });
 app.use("/api/inngest", serve({ client: inngest, functions })); 

@@ -117,6 +117,28 @@ const MapView = () => {
     }
   };
 
+  const handleStop = async (vehicleId) => {
+  if (!user) return alert("Please login first");
+
+  try {
+    const response = await fetch(`${url}/vehicles/${user.id}/${vehicleId}`, {
+      method: "DELETE",
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert("Vehicle stopped and removed successfully!");
+      // Optionally, remove it from local state to update UI
+      setVehicles((prev) => prev.filter((v) => v.vehicleId !== vehicleId));
+    } else {
+      alert(data.message || "Error stopping vehicle");
+    }
+  } catch (error) {
+    console.error("Error deleting vehicle:", error);
+    alert("Error deleting vehicle");
+  }
+};
+
   return (
     <div className="relative w-full h-screen">
       {/* ✅ Add Vehicle Button */}
@@ -154,6 +176,8 @@ const MapView = () => {
               Lat: {v.lat.toFixed(4)}
               <br />
               Lng: {v.lng.toFixed(4)}
+              <br />
+               <button onClick={() => handleStop(v.vehicleId)}>Stop</button>
             </Popup>
           </Marker>
         ))}
@@ -174,7 +198,7 @@ const MapView = () => {
         <div className="absolute top-0 right-0 h-full w-[350px] bg-white shadow-2xl z-[1200] flex flex-col pointer-events-none">
           <div className="p-6 flex-1 pointer-events-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Add Vehicle</h2>
+              <h2 className="text-xl font-semibold">Add Your Vehicle</h2>
               <button
                 onClick={() => setOpen(false)}
                 className="text-gray-600 hover:text-black"

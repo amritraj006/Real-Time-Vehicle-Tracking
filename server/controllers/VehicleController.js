@@ -1,4 +1,7 @@
-import Vehicle from "../models/vehicleModel.js";
+// Correct import with exact filename
+import Vehicle from "../models/VehicleModel.js";
+
+
 
 // ✅ Add new vehicle
 export const addVehicle = async (req, res) => {
@@ -41,3 +44,26 @@ export const getVehiclesByUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// ✅ Delete specific vehicle by vehicleId and userId
+export const deleteVehicle = async (req, res) => {
+  try {
+    const { userId, vehicleId } = req.params;
+
+    const vehicle = await Vehicle.findOneAndDelete({
+      userId: userId,
+      vehicleId: vehicleId,
+    });
+
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle not found" });
+    }
+
+    res.status(200).json({ message: "Vehicle deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting vehicle:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
