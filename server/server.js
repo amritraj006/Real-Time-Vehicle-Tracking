@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
-import Vehicle from "./models/VehicleModel.js";
+import Vehicle from "./models/vehicleModel.js";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
