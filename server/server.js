@@ -4,12 +4,10 @@ import { Server } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
-
 import Vehicle from "./models/VehicleModel.js";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
-
 
 dotenv.config();
 connectDB();
@@ -23,8 +21,6 @@ app.use(
     methods: "GET,POST,PUT,DELETE",
   })
 );
-
-
 
 app.use(express.json());
 

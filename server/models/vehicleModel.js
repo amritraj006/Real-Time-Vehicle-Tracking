@@ -11,13 +11,16 @@ const vehicleSchema = new mongoose.Schema(
     },
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
-    userId: { type: String, ref: "User", required: true }, // Clerk userId
+
+    // Clerk userId (matches User._id)
+    userId: { type: String, ref: "User", required: true },
+
     updatedAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
 
-// ✅ Check if model already exists
+// Prevent model overwrite in dev
 const Vehicle = mongoose.models.Vehicle || mongoose.model("Vehicle", vehicleSchema);
 
 export default Vehicle;

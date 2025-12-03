@@ -1,5 +1,6 @@
 // Correct import with exact filename
-import Vehicle from "../models/VehicleModel";
+import Vehicle from "../models/VehicleModel.js";
+import User from "../models/UserModel.js";
 
 
 // ✅ Add new vehicle
@@ -11,11 +12,13 @@ export const addVehicle = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    // Check if vehicle already exists
     const existingVehicle = await Vehicle.findOne({ vehicleId });
     if (existingVehicle) {
       return res.status(400).json({ message: "Vehicle already exists" });
     }
 
+    // Create vehicle
     const vehicle = await Vehicle.create({
       vehicleId,
       name,
@@ -25,12 +28,21 @@ export const addVehicle = async (req, res) => {
       userId,
     });
 
-    res.status(201).json(vehicle);
+    // ⬇️ PUSH vehicle into user's vehicles array
+    await User.findByIdAndUpdate(
+      userId,
+      { $push: { vehicles: vehicle._id } },
+      { new: true }
+    );
+
+    return res.status(201).json(vehicle);
+
   } catch (error) {
     console.error("❌ Error adding vehicle:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // ✅ Get all vehicles for a specific user
 export const getVehiclesByUser = async (req, res) => {

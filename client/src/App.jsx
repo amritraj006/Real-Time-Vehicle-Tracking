@@ -3,6 +3,7 @@ import MapView from './pages/MapView';
 import LandingPage from './pages/LandingPage';
 import Home from './pages/Home';
 import { Routes, Route } from 'react-router-dom';
+import Lander from './pages/Lander';
 
 const App = () => {
   return (
@@ -11,6 +12,7 @@ const App = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path='/home' element={<Home />} />
         <Route path="/map" element={<MapView />} />
+        <Route path='/lander' element={<Lander />}/>
       </Routes>
     </>
   );
