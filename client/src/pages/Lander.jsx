@@ -5,6 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useParams } from "react-router-dom";
 import { useAppContext } from "../contexts/AppContext";
+import Loader from "../components/map/Loader";
 
 // Icons for vehicles
 const icons = {
@@ -62,7 +63,7 @@ const Lander = () => {
     };
   }, [vehicleId, socket]);
 
-  if (!coords) return <p className="text-center mt-10">Loading vehicle location...</p>;
+  if (!coords) return <Loader />;
 
   return (
     <div className="w-full h-screen">

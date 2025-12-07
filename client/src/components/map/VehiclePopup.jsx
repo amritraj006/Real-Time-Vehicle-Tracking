@@ -74,9 +74,6 @@ const copyLocation = () => {
         <p><b>Lat:</b> {vehicle.lat.toFixed(4)}</p>
         <p><b>Lng:</b> {vehicle.lng.toFixed(4)}</p>
         <p><b>Speed:</b> {speed} km/h</p>
-        <p><b>Fuel:</b> {fuelLevel}%</p>
-        <p><b>Battery:</b> {battery}%</p>
-        <p><b>Health:</b> {health}</p>
         <p><b>Updated:</b> {new Date().toLocaleTimeString()}</p>
       </div>
 
