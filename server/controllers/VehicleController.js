@@ -77,4 +77,20 @@ export const deleteVehicle = async (req, res) => {
   }
 };
 
+export const getVehicleById = async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+
+    const vehicle = await Vehicle.findOne({ vehicleId });
+
+    if (!vehicle) {
+      return res.status(404).json({ success: false, message: "Vehicle not found" });
+    }
+
+    res.json({ success: true, vehicle });
+  } catch (error) {
+    console.error("Error fetching vehicle:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 

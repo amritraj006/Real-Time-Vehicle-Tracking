@@ -12,6 +12,7 @@ import {
   FaInstagram,
   FaBatteryThreeQuarters,
 } from "react-icons/fa";
+import { useAppContext } from "../../contexts/AppContext";
 
 const vehicleIcons = {
   car: <FaCar className="text-blue-500 text-xl" />,
@@ -21,27 +22,27 @@ const vehicleIcons = {
 };
 
 const VehiclePopup = ({ vehicle, handleStop }) => {
-  const shareURL = `https://www.google.com/maps?q=${vehicle.lat},${vehicle.lng}`;
-  const shareText = `🚗 *${vehicle.name}* 
-Type: ${vehicle.type}
-Location: ${shareURL}`;
+  const {frontendUrl} = useAppContext();
+  // Replace Google Maps link with your tracking page
+const trackingURL = `${frontendUrl}/track/${vehicle.vehicleId}`;
+
+// WhatsApp text message
+const shareText = `🚗 *${vehicle.name}*
+Track this vehicle live:
+${trackingURL}`;
 
   // WhatsApp share
-  const shareWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
-  };
+  // WhatsApp share
+const shareWhatsApp = () => {
+  window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
+};
 
-  // Instagram share (Instagram does not allow direct share URLs)
-  const shareInstagram = () => {
-    alert("Instagram does not allow direct location sharing. Copying link.");
-    navigator.clipboard.writeText(shareURL);
-  };
+// Copy link
+const copyLocation = () => {
+  navigator.clipboard.writeText(trackingURL);
+  alert("Tracking link copied!");
+};
 
-  // Copy location
-  const copyLocation = () => {
-    navigator.clipboard.writeText(shareURL);
-    alert("Location copied to clipboard!");
-  };
 
   // Open Google Maps navigation
   const openDirections = () => {
@@ -95,12 +96,7 @@ Location: ${shareURL}`;
           <FaWhatsapp size={14} /> WhatsApp
         </button>
 
-        <button
-          onClick={shareInstagram}
-          className="flex-1 flex items-center justify-center gap-1 bg-pink-500 text-white rounded px-2 py-1"
-        >
-          <FaInstagram size={14} /> Instagram
-        </button>
+
 
         <button
           onClick={openDirections}
@@ -110,10 +106,7 @@ Location: ${shareURL}`;
         </button>
       </div>
 
-      {/* SOS Alert */}
-      <button className="mt-2 w-full bg-yellow-500 text-white py-1 rounded flex items-center justify-center gap-1">
-        <FaExclamationTriangle /> SOS Alert
-      </button>
+
 
       {/* Stop Vehicle */}
       <button

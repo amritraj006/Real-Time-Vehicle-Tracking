@@ -12,7 +12,8 @@ const App = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path='/home' element={<Home />} />
         <Route path="/map" element={<MapView />} />
-        <Route path='/lander' element={<Lander />}/>
+        <Route path="/track/:vehicleId" element={<Lander />} />
+
       </Routes>
     </>
   );

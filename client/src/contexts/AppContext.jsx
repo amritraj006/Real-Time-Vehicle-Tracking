@@ -15,15 +15,19 @@ export const AppProvider = ({ children }) => {
     import.meta.env.MODE === "production"
       ? "https://real-time-vehicle-tracking.onrender.com"
       : "http://localhost:5001";
-
   // Initialize socket connection once
   const socket = useMemo(
     () => io(socketUrl, { transports: ["websocket", "polling"] }),
     [socketUrl]
   );
 
+  const frontendUrl =
+    import.meta.env.MODE === "production"
+      ? "https://real-time-vehicle-tracking-frontend.onrender.com"
+      : "http://localhost:5173";
+
   return (
-    <AppContext.Provider value={{ url, socket }}>
+    <AppContext.Provider value={{ url, socket, frontendUrl }}>
       {children}
     </AppContext.Provider>
   );
