@@ -7,11 +7,11 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     image: { type: String, required: true },
 
-    // 👉 Stores ALL vehicles EVER added by the user
+    // Store ONLY the vehicle name
     vehicles: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Vehicle",
+        type: String,   // <-- Only name stored
+        required: true,
       }
     ],
   },

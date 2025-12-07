@@ -28,10 +28,10 @@ export const addVehicle = async (req, res) => {
       userId,
     });
 
-    // ⬇️ PUSH vehicle into user's vehicles array
+    // Save ONLY vehicle name to user's vehicles list
     await User.findByIdAndUpdate(
       userId,
-      { $push: { vehicles: vehicle._id } },
+      { $push: { vehicles: vehicle.name } },
       { new: true }
     );
 
