@@ -110,43 +110,52 @@ const LandingPage = () => {
             {currentSlide.description}
           </h3>
 
-          <button
-            onClick={() => navigate("/home")}
-            className="mt-4 text-white bg-red-500 px-8 py-3 rounded-full text-lg hover:scale-105 hover:bg-red-600 transition-transform shadow-lg"
-          >
-            Get Started
-          </button>
+         <button
+  onClick={() => navigate("/home")}
+  className="group relative px-10 py-4 backdrop-blur-sm bg-green-500/90 border border-emerald-400/30 text-white font-semibold rounded-full 
+            shadow-lg hover:shadow-2xl hover:bg-emerald-600/95 hover:scale-[1.02] hover:border-emerald-300/50
+            active:scale-[0.98] transition-all duration-300
+            focus:outline-none focus:ring-3 focus:ring-emerald-300/50 focus:ring-offset-2 focus:ring-offset-white/10"
+>
+  <span className="relative z-10">Get Started</span>
+  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                   translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+</button>
         </div>
 
         {/* 🔸 Slide Controls */}
-        <div className="absolute bottom-10 flex items-center space-x-10">
-  <div
+<div className="absolute bottom-10 flex items-center space-x-6">
+  <button
+    aria-label="Previous slide"
     onClick={handlePrevSlide}
-    className="h-14 w-14 flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full shadow-lg cursor-pointer 
-    hover:from-purple-600 hover:to-pink-500 hover:scale-125 hover:shadow-2xl transition-all duration-300 ease-in-out"
+    className="group h-14 w-14 flex items-center justify-center backdrop-blur-md bg-white/10 border border-white/20 rounded-full shadow-xl 
+              hover:shadow-2xl hover:bg-white/20 hover:border-white/30 hover:scale-110 transition-all duration-300
+              focus:outline-none focus:ring-2 focus:ring-white/50 active:scale-95"
   >
-    <ChevronLeft className="h-7 w-7" />
-  </div>
+    <ChevronLeft className="h-7 w-7 text-white group-hover:translate-x-[-2px] transition-transform" />
+  </button>
 
-  <div
+            <img
+            src={isPlaying ? pause_icon : play_icon}
+            alt={isPlaying ? "Pause" : "Play"}
+            className="w-14 h-14 hover:scale-110 transition-transform"
+            onClick={handleTogglePlay}
+          />
+
+  <button
+    aria-label="Next slide"
     onClick={handleNextSlide}
-    className="h-14 w-14 flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full shadow-lg cursor-pointer 
-    hover:from-blue-500 hover:to-purple-600 hover:scale-125 hover:shadow-2xl transition-all duration-300 ease-in-out"
+    className="group h-14 w-14 flex items-center justify-center backdrop-blur-md bg-white/10 border border-white/20 rounded-full shadow-xl 
+              hover:shadow-2xl hover:bg-white/20 hover:border-white/30 hover:scale-110 transition-all duration-300
+              focus:outline-none focus:ring-2 focus:ring-white/50 active:scale-95"
   >
-    <ChevronRight className="h-7 w-7" />
-  </div>
+    <ChevronRight className="h-7 w-7 text-white group-hover:translate-x-[2px] transition-transform" />
+  </button>
 </div>
 
 
         {/* 🔸 Play / Pause */}
-        <div className="absolute bottom-10 right-10 cursor-pointer">
-          <img
-            src={isPlaying ? pause_icon : play_icon}
-            alt={isPlaying ? "Pause" : "Play"}
-            className="w-12 h-12 hover:scale-110 transition-transform"
-            onClick={handleTogglePlay}
-          />
-        </div>
+       
       </div>
     </div>
   );
