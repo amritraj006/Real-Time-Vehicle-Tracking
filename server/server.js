@@ -8,6 +8,8 @@ import Vehicle from "./models/vehicleModel.js";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -29,6 +31,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       "https://real-time-vehicle-tracking-1.onrender.com",
+      "https://real-time-vehicle-tracking-admin.onrender.com",
       "http://localhost:5173",
     ],
     methods: ["GET", "POST"],
@@ -39,7 +42,8 @@ const io = new Server(server, {
 app.use("/api/inngest", serve({ client: inngest, functions })); 
 // ✅ REST API
 app.use("/api/vehicles", vehicleRoutes);
-
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/users", userRoutes);
 // ✅ Real-time updates every 5 sec
 setInterval(async () => {
   try {

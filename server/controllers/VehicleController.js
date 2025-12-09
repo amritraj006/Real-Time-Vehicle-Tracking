@@ -3,6 +3,24 @@ import Vehicle from "../models/vehicleModel.js";
 import User from "../models/UserModel.js"
 
 
+export const getActiveVehicles = async (req, res) => {
+  try {
+    const TEN_SECONDS = 10000;
+    const sinceTime = new Date(Date.now() - TEN_SECONDS);
+
+    const activeVehicles = await Vehicle.find({
+      updatedAt: { $gte: sinceTime }
+    }).select("vehicleId name type lat lng updatedAt");
+
+    res.json({ vehicles: activeVehicles });   // FIXED 🔥🔥
+  } catch (error) {
+    console.error("Error fetching active vehicles:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+
 // ✅ Add new vehicle
 export const addVehicle = async (req, res) => {
   try {
@@ -93,4 +111,5 @@ export const getVehicleById = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 

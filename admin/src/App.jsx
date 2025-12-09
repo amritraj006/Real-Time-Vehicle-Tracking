@@ -1,9 +1,16 @@
-import React from 'react'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
-const App = () => {
+function App() {
   return (
-    <div>App</div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AdminLogin />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
