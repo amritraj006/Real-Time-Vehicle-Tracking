@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import Home from './pages/Home';
 import { Routes, Route } from 'react-router-dom';
 import Lander from './pages/Lander';
+import About from './pages/About';
 
 const App = () => {
   return (
@@ -13,7 +14,7 @@ const App = () => {
         <Route path='/home' element={<Home />} />
         <Route path="/map" element={<MapView />} />
         <Route path="/track/:vehicleId" element={<Lander />} />
-
+        <Route path='/about' element={<About />} />
       </Routes>
     </>
   );

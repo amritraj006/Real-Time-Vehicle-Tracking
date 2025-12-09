@@ -1,0 +1,251 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { 
+  FaGithub, 
+  FaLinkedin, 
+  FaInstagram, 
+  FaHome,
+  FaCode,
+  FaDatabase,
+  FaServer,
+  FaReact,
+  FaNodeJs
+} from 'react-icons/fa';
+import { SiMongodb, SiExpress } from 'react-icons/si';
+
+const About = () => {
+  const teamMembers = [
+    {
+      id: 1,
+      name: "Udit Bansal",
+      role: "Frontend Developer",
+      description: "Specializes in React, Redux, and modern UI/UX design. Creates responsive, accessible interfaces with focus on performance and user experience.",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      github: "https://github.com/alexchen",
+      linkedin: "https://linkedin.com/in/alexchen",
+      instagram: "https://instagram.com/alexchen_dev",
+      skills: ["React", "JavaScript", "TypeScript", "Tailwind", "Redux"],
+      icon: <FaReact className="text-cyan-500" />
+    },
+    {
+      id: 2,
+      name: "Amrit Raj",
+      role: "Team Lead & Full Stack Developer",
+      description: "Leads the team with 5+ years MERN stack experience. Excels in architecture design, API development, and project management. Ensures best practices across the stack.",
+      image: "https://media.licdn.com/dms/image/v2/D5635AQF2I8ouSN5LjA/profile-framedphoto-shrink_400_400/B56Zr_IrUTIsAg-/0/1765217056810?e=1765825200&v=beta&t=3o8GfVOY6-BwBElnudZiseBGHh5mXOKERaXwfaKRKJ8",
+      github: "https://github.com/amritraj006",
+      linkedin: "https://www.linkedin.com/in/amrit-raj-54652b294/",
+      instagram: "https://instagram.com/sam.codes",
+      skills: ["Node.js", "Express", "MongoDB", "React", "Docker", "AWS"],
+      icon: <FaCode className="text-purple-500" />
+    },
+    {
+      id: 3,
+      name: "Suryadev Rana",
+      role: "Backend Developer",
+      description: "Focuses on server-side logic, database design, and API security. Implements scalable and efficient backend systems with optimal performance.",
+      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      github: "https://github.com/marcusr",
+      linkedin: "https://linkedin.com/in/marcusrodriguez",
+      instagram: "https://instagram.com/marcus_dev",
+      skills: ["Node.js", "Express", "MongoDB", "REST APIs", "JWT", "Redis"],
+      icon: <FaServer className="text-green-500" />
+    }
+  ];
+
+  const techStack = [
+    { name: "MongoDB", icon: <SiMongodb className="text-green-600 text-2xl" />, color: "bg-green-100" },
+    { name: "Express", icon: <SiExpress className="text-gray-800 text-2xl" />, color: "bg-gray-100" },
+    { name: "React", icon: <FaReact className="text-cyan-600 text-2xl" />, color: "bg-cyan-100" },
+    { name: "Node.js", icon: <FaNodeJs className="text-green-700 text-2xl" />, color: "bg-green-100" },
+    { name: "Tailwind CSS", icon: <FaCode className="text-teal-500 text-2xl" />, color: "bg-teal-100" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
+      {/* Header with Home Button */}
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-10 md:mb-16">
+          <Link 
+            to="/home"
+            className="flex items-center gap-2 px-5 py-3 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+          >
+            <FaHome className="text-blue-600" />
+            <span className="font-semibold text-gray-700">Back to Home</span>
+          </Link>
+          
+          <div className="hidden md:block">
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+              MERN Stack Team
+            </h1>
+          </div>
+        </div>
+
+        {/* Page Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            Meet Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Development Team</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+            We're a passionate team of developers building modern web applications using the MERN stack. 
+            Combining expertise in frontend elegance and backend robustness to deliver exceptional digital experiences.
+          </p>
+        </div>
+
+        {/* Team Members Section */}
+        <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-8 mb-20">
+          {teamMembers.map((member, index) => (
+            <div 
+              key={member.id}
+              className={`relative w-full max-w-md ${
+                member.role.includes("Team Lead") 
+                  ? "lg:-mt-8 lg:scale-105 z-10" 
+                  : ""
+              }`}
+            >
+       
+
+              {/* Member Card */}
+              <div className={`
+                bg-white rounded-2xl shadow-xl overflow-hidden
+                transform transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl
+                ${member.role.includes("Team Lead") 
+                  ? "border-4 border-transparent bg-gradient-to-br from-white to-blue-50 shadow-2xl" 
+                  : ""
+                }
+              `}>
+                {/* Profile Header */}
+                <div className="relative">
+                  {/* Background Pattern */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-purple-50 opacity-50"></div>
+                  
+                  {/* Profile Image */}
+                  <div className="relative flex justify-center -mb-16">
+                    <div className="
+                      w-32 h-32 rounded-full border-4 border-white 
+                      shadow-xl overflow-hidden mt-8
+                    ">
+                      <img 
+                        src={member.image} 
+                        alt={member.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Member Info */}
+                <div className="pt-20 px-8 pb-8">
+                  {/* Name and Role */}
+                  <div className="text-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-800">{member.name}</h3>
+                    <div className="flex items-center justify-center gap-2 mt-2">
+                      {member.icon}
+                      <p className="text-lg font-semibold text-blue-600">{member.role}</p>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-gray-600 text-center mb-6 leading-relaxed">
+                    {member.description}
+                  </p>
+
+                  {/* Skills */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-8">
+                    {member.skills.map((skill, idx) => (
+                      <span 
+                        key={idx}
+                        className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Social Links */}
+                  <div className="flex justify-center gap-4">
+                    <a 
+                      href={member.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors duration-300 shadow-md"
+                    >
+                      <FaGithub className="text-xl" />
+                      <span className="font-medium">GitHub</span>
+                    </a>
+                    
+                    <a 
+                      href={member.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-md"
+                    >
+                      <FaLinkedin className="text-xl" />
+                      <span className="font-medium">LinkedIn</span>
+                    </a>
+                    
+                    <a 
+                      href={member.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-orange-500 text-white rounded-lg hover:opacity-90 transition-colors duration-300 shadow-md"
+                    >
+                      <FaInstagram className="text-xl" />
+                      <span className="font-medium">Instagram</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Technology Stack */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-12">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
+            Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Technology Stack</span>
+          </h2>
+          
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+            {techStack.map((tech, index) => (
+              <div 
+                key={index}
+                className="flex flex-col items-center group cursor-pointer"
+              >
+                <div className={`
+                  w-20 h-20 rounded-2xl flex items-center justify-center
+                  ${tech.color} shadow-lg group-hover:shadow-xl
+                  transform transition-all duration-300 group-hover:scale-110
+                  mb-4
+                `}>
+                  {tech.icon}
+                </div>
+                <span className="font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">
+                  {tech.name}
+                </span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full">
+              <span className="text-2xl font-bold text-white mr-3">M</span>
+              <span className="text-2xl font-bold text-white mr-3">E</span>
+              <span className="text-2xl font-bold text-white mr-3">R</span>
+              <span className="text-2xl font-bold text-white">N</span>
+              <span className="ml-4 text-white font-semibold">Full Stack Excellence</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-gray-500 text-sm mb-8">
+          <p>© {new Date().getFullYear()} MERN Stack Team. All rights reserved.</p>
+          <p className="mt-2">Building the future, one line of code at a time.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default About;
