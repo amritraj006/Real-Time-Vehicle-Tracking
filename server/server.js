@@ -57,6 +57,8 @@ setInterval(async () => {
 
       // Emit with userId so frontend filters properly
       io.emit("locationUpdate", {
+        name: v.name,
+        type: v.type,
         userId: v.userId,
         vehicleId: v.vehicleId,
         lat: v.lat,
