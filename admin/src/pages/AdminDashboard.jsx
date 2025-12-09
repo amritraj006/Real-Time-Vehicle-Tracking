@@ -6,6 +6,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { Users, Truck, Activity } from "lucide-react"; // icons
 import "leaflet/dist/leaflet.css";
+import { useAppContext } from "../contexts/AppContext";
 
 // ------------------ LEAFLET ICON FIX ------------------
 delete L.Icon.Default.prototype._getIconUrl;
@@ -18,10 +19,11 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const BACKEND_ORIGIN = "http://localhost:5001";
-const SOCKET_URL = BACKEND_ORIGIN;
 
-const Dashboard = () => {
+
+const AdminDashboard = () => {
+  const {url, socketUrl} = useAppContext();
+  
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalVehiclesAdded: 0,
@@ -43,8 +45,8 @@ const Dashboard = () => {
   const fetchData = async () => {
     try {
       const [statsRes, usersRes] = await Promise.all([
-        axios.get(`${BACKEND_ORIGIN}/api/dashboard/stats`),
-        axios.get(`${BACKEND_ORIGIN}/api/users`),
+        axios.get(`${url}/dashboard/stats`),
+        axios.get(`${url}/users`),
       ]);
       setStats(statsRes.data);
       setUsers(usersRes.data);
@@ -58,7 +60,7 @@ const Dashboard = () => {
 
   const fetchActiveVehicles = async () => {
     try {
-      const res = await axios.get(`${BACKEND_ORIGIN}/api/vehicles/active`);
+      const res = await axios.get(`${url}/vehicles/active`);
       const list = Array.isArray(res.data)
         ? res.data
         : res.data && Array.isArray(res.data.vehicles)
@@ -84,7 +86,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (socketRef.current) return;
 
-    const socket = io(SOCKET_URL, { transports: ["websocket"] });
+    const socket = io(socketUrl, { transports: ["websocket"] });
     socketRef.current = socket;
 
     socket.on("connect", () => console.log("Socket connected:", socket.id));
@@ -278,4 +280,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default AdminDashboard;
