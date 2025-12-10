@@ -12,11 +12,11 @@ const Sidebar = ({ activeTab, setActiveTab, socket }) => {
     <aside className="lg:w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl lg:h-screen lg:sticky lg:top-0">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl">
+          <div className="p-2 bg-gradient-to-br from-green-600 to-blue-700 rounded-xl">
             <Shield className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-800 bg-clip-text text-transparent">
               Admin Panel
             </h2>
             <p className="text-xs text-gray-500">Real-time Tracking System</p>
