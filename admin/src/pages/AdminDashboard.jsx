@@ -1,22 +1,12 @@
-// AdminDashboard.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet";
-import L from "leaflet";
-import { Users, Truck, Activity } from "lucide-react";
-import "leaflet/dist/leaflet.css";
 import { useAppContext } from "../contexts/AppContext";
-
-// ------------------ LEAFLET ICON FIX ------------------
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
+import Sidebar from "../components/Sidebar";
+import StatsDashboard from "../components/StatsDashboard";
+import UsersDashboard from "../components/UsersDashboard";
+import MapDashboard from "../components/MapDashboard";
+import LoadingState from "../components/LoadingState";
+import ErrorState from "../components/ErrorState";
 
 const AdminDashboard = () => {
   const { url, socket } = useAppContext();
@@ -33,7 +23,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [mapLoading, setMapLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("stats"); // stats, users, vehicles
+  const [activeTab, setActiveTab] = useState("stats");
 
   // ------------------ Fetch Dashboard Data ------------------
   const fetchData = async () => {
@@ -119,160 +109,35 @@ const AdminDashboard = () => {
     };
   }, [socket]);
 
-  if (loading)
-    return <div className="text-center mt-20 text-gray-700">Loading...</div>;
+  if (loading) return <LoadingState message="Loading dashboard..." />;
+  if (error) return <ErrorState error={error} onRetry={fetchData} />;
 
-  if (error)
-    return <div className="text-center mt-20 text-red-500">{error}</div>;
-
-  // ------------------ COMPONENT: STATS ------------------
-  const renderStats = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {[
-        { title: "Total Users", value: stats.totalUsers },
-        { title: "Total Vehicles Added", value: stats.totalVehiclesAdded },
-        { title: "Total Tracked Vehicles", value: stats.totalTrackedVehicles },
-        { title: "Active Vehicles (last 10s)", value: stats.activeVehicles },
-      ].map((card, idx) => (
-        <div
-          key={idx}
-          className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow"
-        >
-          <h3 className="text-lg text-gray-600">{card.title}</h3>
-          <p className="text-3xl font-bold mt-2 text-gray-800">{card.value}</p>
-        </div>
-      ))}
-    </div>
-  );
-
-  // ------------------ COMPONENT: USERS ------------------
-  const renderUsers = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {users.map((user) => (
-        <div
-          key={user._id}
-          className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition"
-        >
-          <img
-            src={user.image}
-            alt={user.name}
-            className="w-20 h-20 rounded-full mb-4 object-cover"
-          />
-          <h3 className="text-lg font-semibold">{user.name}</h3>
-          <p className="text-gray-600">{user.email}</p>
-
-          <div className="mt-3">
-            <h4 className="font-semibold text-gray-700">Vehicles:</h4>
-            {user.vehicles?.length > 0 ? (
-              <ul className="list-disc list-inside text-gray-600">
-                {user.vehicles.map((v, i) => (
-                  <li key={i}>{v}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No vehicles</p>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  // ------------------ COMPONENT: MAP VIEW ------------------
-  const renderMap = () => (
-    <div className="w-full h-[550px] rounded-lg overflow-hidden shadow-md border">
-      {mapLoading ? (
-        <div className="flex items-center justify-center h-full text-gray-600">
-          Loading map...
-        </div>
-      ) : (
-        <MapContainer
-          center={[20.5937, 78.9629]}
-          zoom={5}
-          style={{ height: "100%", width: "100%" }}
-        >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-          {vehicles.map((v) => {
-            const lat = Number(v.lat);
-            const lng = Number(v.lng);
-            if (!isFinite(lat) || !isFinite(lng)) return null;
-
-            const key = v.vehicleId ?? v._id ?? `${lat}-${lng}`;
-
-            return (
-              <Marker key={key} position={[lat, lng]}>
-                {/* Vehicle name displayed on map */}
-                <Tooltip direction="top" offset={[0, -10]} opacity={1} permanent>
-                  {v.name}
-                </Tooltip>
-
-                {/* Popup for details */}
-                <Popup>
-                  <div className="text-sm">
-                    <p className="font-semibold">{v.name}</p>
-                    {v.type && <p>Type: {v.type}</p>}
-                    <p>Lat: {lat.toFixed(4)}</p>
-                    <p>Lng: {lng.toFixed(4)}</p>
-                    <p>
-                      Updated:{" "}
-                      {v.updatedAt
-                        ? new Date(v.updatedAt).toLocaleString()
-                        : "—"}
-                    </p>
-                    {v.userId && <p>User: {v.userId}</p>}
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
-        </MapContainer>
-      )}
-    </div>
-  );
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case "stats":
+        return <StatsDashboard stats={stats} vehicles={vehicles} />;
+      case "users":
+        return <UsersDashboard users={users} />;
+      case "vehicles":
+        return <MapDashboard vehicles={vehicles} mapLoading={mapLoading} />;
+      default:
+        return <StatsDashboard stats={stats} vehicles={vehicles} />;
+    }
+  };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg p-6 flex flex-col">
-        <h2 className="text-2xl font-bold mb-8">Admin Panel</h2>
-
-        <nav className="flex flex-col gap-4 text-gray-700">
-          <button
-            onClick={() => setActiveTab("stats")}
-            className={`flex items-center gap-2 p-2 rounded hover:bg-gray-200 ${
-              activeTab === "stats" ? "bg-gray-200 font-semibold" : ""
-            }`}
-          >
-            <Activity size={18} /> Dashboard
-          </button>
-
-          <button
-            onClick={() => setActiveTab("users")}
-            className={`flex items-center gap-2 p-2 rounded hover:bg-gray-200 ${
-              activeTab === "users" ? "bg-gray-200 font-semibold" : ""
-            }`}
-          >
-            <Users size={18} /> Users
-          </button>
-
-          <button
-            onClick={() => setActiveTab("vehicles")}
-            className={`flex items-center gap-2 p-2 rounded hover:bg-gray-200 ${
-              activeTab === "vehicles" ? "bg-gray-200 font-semibold" : ""
-            }`}
-          >
-            <Truck size={18} /> Vehicles
-          </button>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
-        {activeTab === "stats" && renderStats()}
-        {activeTab === "users" && renderUsers()}
-        {activeTab === "vehicles" && renderMap()}
-      </main>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="flex flex-col lg:flex-row">
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          socket={socket} 
+        />
+        
+        <main className="flex-1 p-6 lg:p-8">
+          {renderActiveTab()}
+        </main>
+      </div>
     </div>
   );
 };

@@ -17,6 +17,4 @@ router.delete("/:userId/:vehicleId", deleteVehicle); // Delete vehicle
 router.get("/track/:vehicleId", getVehicleById); 
 
 
-
-
 export default router;
