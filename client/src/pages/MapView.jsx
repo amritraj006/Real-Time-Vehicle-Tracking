@@ -6,6 +6,8 @@ import L from "leaflet";
 import { useAppContext } from "../contexts/AppContext";
 import { Plus } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
+import { Tooltip } from "react-leaflet";
+
 
 import AddVehicleForm from "../components/map/AddVehicleForm";
 import VehiclePopup from "../components/map/VehiclePopup";
@@ -87,6 +89,7 @@ const MapView = () => {
       alert("Error deleting vehicle");
     }
   };
+  
 
   return (
     <div className="relative w-full h-screen">
@@ -100,12 +103,19 @@ const MapView = () => {
         <LocationSelector />
 
         {vehicles.map(v => (
-          <Marker key={v.vehicleId} position={[v.lat, v.lng]} icon={icons[v.type] || icons.car}>
-            <Popup>
-              <VehiclePopup vehicle={v} handleStop={handleStop} />
-            </Popup>
-          </Marker>
-        ))}
+  <Marker key={v.vehicleId} position={[v.lat, v.lng]} icon={icons[v.type] || icons.car}>
+    
+    {/* Show vehicle name ALWAYS visible */}
+    <Tooltip permanent direction="top" offset={[0, -20]}>
+      <span className="font-semibold text-blue-600">{v.name}</span>
+    </Tooltip>
+
+    <Popup>
+      <VehiclePopup vehicle={v} handleStop={handleStop} />
+    </Popup>
+  </Marker>
+))}
+
 
         {open && newVehicle.lat && newVehicle.lng && <Marker position={[newVehicle.lat, newVehicle.lng]} icon={icons[newVehicle.type]} />}
       </MapContainer>

@@ -8,16 +8,23 @@ export const AppProvider = ({ children }) => {
   const url =
     import.meta.env.MODE === "production"
       ? "https://real-time-vehicle-tracking.onrender.com/api"
-      : "http://localhost:5001/api";
+      : "http://localhost:5001/api"; // FIXED
 
   // Backend Socket URL
   const socketUrl =
     import.meta.env.MODE === "production"
       ? "https://real-time-vehicle-tracking.onrender.com"
-      : "http://localhost:5001";
-  // Initialize socket connection once
+      : "http://localhost:5001"; // FIXED
+
+  // Initialize socket connection (runs ONCE)
   const socket = useMemo(
-    () => io(socketUrl, { transports: ["websocket", "polling"] }),
+    () =>
+      io(socketUrl, {
+        transports: ["websocket"],
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+      }),
     [socketUrl]
   );
 
