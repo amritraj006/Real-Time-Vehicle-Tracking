@@ -105,8 +105,8 @@ const Hero = () => {
         >
           <a href="#" className="text-white">Home</a>
           <a href="#features" className="text-white">Features</a>
-          <a href="#testimonials" className="text-white">Testimonials</a>
-          <a href="#contact" className="text-white">Contact</a>
+          <a href="#testimonial" className="text-white">Testimonials</a>
+          <a href="#cta" className="text-white">Contact</a>
           <button
             onClick={() => setMenuOpen(false)}
             className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-green-600 hover:bg-green-700 transition text-white rounded-md flex"
