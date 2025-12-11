@@ -28,9 +28,6 @@ const Hero = () => {
   };
 
 
-
-  
-
   return (
     <>
  {openVideoModal && (
