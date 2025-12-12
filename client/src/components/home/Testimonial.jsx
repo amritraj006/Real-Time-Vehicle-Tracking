@@ -44,8 +44,7 @@ const Testimonial = () => {
                     <span className="text-xs text-slate-500">{card.handle}</span>
                 </div>
             </div>
-            <p className="text-sm py-4 text-gray-800">Radiant made undercutting all of our competitors an absolute
-                breeze.</p>
+            <p className="text-sm py-4 text-gray-800">Creating this Real-Time Vehicle Tracker made live vehicle monitoring incredibly seamless.</p>
             <div className="flex items-center justify-between text-slate-500 text-xs">
                 <div className="flex items-center gap-1">
                     <span>Posted on</span>

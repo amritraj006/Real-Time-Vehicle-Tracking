@@ -165,7 +165,7 @@ const Hero = () => {
           </h1>
 
           <p className="max-w-md text-center text-base my-7">
-            Monitor live vehicle locations, ensure safety, and improve fleet efficiency with real-time tracking.
+            Monitor live vehicle locations, and improve fleet efficiency with real-time tracking.
           </p>
 
           {/* CTA Buttons */}
