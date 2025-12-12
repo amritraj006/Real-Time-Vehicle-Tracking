@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { io } from "socket.io-client";
+import { useState, useEffect } from "react";
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  const [users, setUsers] = useState([]); 
   // Backend API URL
   const url =
     import.meta.env.MODE === "production"
@@ -26,8 +28,25 @@ export const AppProvider = ({ children }) => {
       ? "https://real-time-vehicle-tracking-frontend.onrender.com"
       : "http://localhost:5173";
 
+      const fetchUsers = async () => {
+        try {
+          const res = await fetch(`${url}/users`);
+          const data = await res.json();
+          setUsers(data);
+        }
+        catch (error) {
+          console.error("Error fetching users:", error);
+        }
+      }
+
+    useEffect(() => {
+      fetchUsers();
+    },[])
+
+    const totalUsers = users.length;
+
   return (
-    <AppContext.Provider value={{ url, socket, frontendUrl }}>
+    <AppContext.Provider value={{ url, socket, frontendUrl, users, totalUsers }}>
       {children}
     </AppContext.Provider>
   );

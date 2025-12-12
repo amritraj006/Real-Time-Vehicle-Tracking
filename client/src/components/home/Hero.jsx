@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserButton, useUser, SignInButton, useClerk } from "@clerk/clerk-react";
 import { Cross, CrossIcon, X } from "lucide-react";
+import { useAppContext } from "../../contexts/AppContext";
 
 const Hero = () => {
   const { isSignedIn, user } = useUser();
@@ -9,6 +10,7 @@ const Hero = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [openVideoModal, setOpenVideoModal] = useState(false);
+  const {totalUsers} = useAppContext();
 
   const logos = [
     "https://saasly.prebuiltui.com/assets/companies-logo/instagram.svg",
@@ -149,7 +151,7 @@ const Hero = () => {
                     </svg>
                   ))}
               </div>
-              <p className="text-sm text-gray-700">Used by 10,000+ users</p>
+              <p className="text-sm text-gray-700">Used by {totalUsers} users</p>
             </div>
           </div>
 
