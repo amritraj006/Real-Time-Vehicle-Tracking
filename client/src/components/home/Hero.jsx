@@ -106,6 +106,21 @@ const Hero = () => {
           <a href="#features" className="text-white">Features</a>
           <a href="#testimonial" className="text-white">Testimonials</a>
           <a href="#cta" className="text-white">Contact</a>
+
+          <div className="flex gap-2">
+            {isSignedIn ? (
+              <div className="">
+                <UserButton afterSignOutUrl="/home" />
+              </div>
+            ) : (
+              <SignInButton mode="modal">
+                <button className=" px-6 py-2 border rounded-full text-white">
+                  Login
+                </button>
+              </SignInButton>
+            )}
+          </div>
+
           <button
             onClick={() => setMenuOpen(false)}
             className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-green-600 hover:bg-green-700 transition text-white rounded-md flex"
