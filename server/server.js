@@ -49,24 +49,30 @@ setInterval(async () => {
   try {
     const vehicles = await Vehicle.find();
     for (const v of vehicles) {
-      // Randomly simulate small movement
-      v.lat += (Math.random() - 0.5) * 0.001;
-      v.lng += (Math.random() - 0.5) * 0.001;
-      v.updatedAt = new Date();
-      await v.save();
+      try {
+        // Randomly simulate small movement
+        v.lat += (Math.random() - 0.5) * 0.001;
+        v.lng += (Math.random() - 0.5) * 0.001;
+        v.updatedAt = new Date();
+        await v.save();
 
-      // Emit with userId so frontend filters properly
-      io.emit("locationUpdate", {
-        name: v.name,
-        type: v.type,
-        userId: v.userId,
-        vehicleId: v.vehicleId,
-        lat: v.lat,
-        lng: v.lng,
-      });
+        // Emit with userId so frontend filters properly
+        io.emit("locationUpdate", {
+          name: v.name,
+          type: v.type,
+          userId: v.userId,
+          vehicleId: v.vehicleId,
+          lat: v.lat,
+          lng: v.lng,
+        });
+      } catch (vehicleError) {
+        // Skip vehicles that might have been deleted
+        console.warn(`⚠️ Skipping update for vehicle ${v.vehicleId}:`, vehicleError.message);
+        continue;
+      }
     }
   } catch (error) {
-    console.error("❌ Error updating vehicle locations:", error);
+    console.error("❌ Error in vehicle update interval:", error);
   }
 }, 5000);
 
