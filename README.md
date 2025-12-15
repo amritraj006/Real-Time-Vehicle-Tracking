@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🚗 Real-Time Vehicle Tracker
 
 A web-based **Real-Time Vehicle Tracking System** developed as a **college project**, designed to track, monitor, and visualize vehicle activity on an interactive map using real-time data.
@@ -117,4 +118,6 @@ npm run dev
 cd client
 npm i
 npm run dev
+=======
+>>>>>>> 4d6d8bb6f84e8d830b1e129cf3669b29c2735635
 
