@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useAppContext } from "../contexts/AppContext";
-import { Plus, Car, Bike, Truck, Bus, Navigation, Users, Activity, Loader2 } from "lucide-react";
+import { Plus, Car, Bike, Truck, Bus, Users, Activity, Loader2 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -20,40 +20,46 @@ L.Icon.Default.mergeOptions({
   shadowUrl: new URL("../../node_modules/leaflet/dist/images/marker-shadow.png", import.meta.url).href,
 });
 
-// Custom Vehicle Icons - Using different, better matching icons
-const createCustomIcon = (color, iconUrl) => {
+// Vehicle type data
+const vehicleTypeData = {
+  car: { 
+    color: "#3B82F6", 
+    svg: `<svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M5 11l2-2h10l2 2v6H5v-6z"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/></svg>` 
+  },
+  bike: { 
+    color: "#EF4444", 
+    svg: `<svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M12 2l3 3h-2v2h2l-3 3-3-3h2V5H9l3-3z"/><circle cx="7" cy="16" r="3"/><circle cx="17" cy="16" r="3"/><path d="M7 13v-2h10v2H7z"/></svg>` 
+  },
+  truck: { 
+    color: "#F59E0B", 
+    svg: `<svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M3 7h18v10H3V7z"/><path d="M3 7l2-4h14l2 4"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/></svg>` 
+  },
+  bus: { 
+    color: "#10B981", 
+    svg: `<svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M3 7h18v10H3V7z"/><path d="M3 7l2-4h14l2 4"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/><path d="M7 11h2v2H7v-2z"/><path d="M11 11h2v2h-2v-2z"/><path d="M15 11h2v2h-2v-2z"/></svg>` 
+  },
+};
+
+// Custom Vehicle Icon with Name
+const getVehicleIcon = (vehicle) => {
+  const { color, svg } = vehicleTypeData[vehicle.type] || vehicleTypeData.car;
+
   return L.divIcon({
     html: `
-      <div style="
-        background-color: ${color};
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      ">
-        <img 
-          src="${iconUrl}" 
-          style="width: 24px; height: 24px; filter: brightness(0) invert(1);" 
-          alt="vehicle"
-        />
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="background-color:${color};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+          ${svg}
+        </div>
+        <div style="background-color:rgba(255,255,255,0.9);color:#333;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;text-align:center;margin-top:2px;box-shadow:0 1px 3px rgba(0,0,0,0.2);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid #ccc;">
+          ${vehicle.name}
+        </div>
       </div>
     `,
     className: "custom-vehicle-icon",
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40],
+    iconSize: [60, 60],
+    iconAnchor: [30, 60],
+    popupAnchor: [0, -60],
   });
-};
-
-const icons = {
-  car: createCustomIcon("#3B82F6", "https://cdn-icons-png.flaticon.com/512/3076/3076042.png"),
-  bike: createCustomIcon("#EF4444", "https://cdn-icons-png.flaticon.com/512/2972/2972185.png"),
-  truck: createCustomIcon("#F59E0B", "https://cdn-icons-png.flaticon.com/512/1630/1630288.png"),
-  bus: createCustomIcon("#10B981", "https://cdn-icons-png.flaticon.com/512/2819/2819107.png"),
 };
 
 // Preview marker for new vehicle
@@ -109,14 +115,24 @@ const MapView = () => {
   const { user } = useUser();
 
   // Calculate vehicle stats
-  const vehicleStats = {
+  const vehicleStats = useMemo(() => ({
     total: vehicles.length,
     byType: vehicles.reduce((acc, vehicle) => {
       acc[vehicle.type] = (acc[vehicle.type] || 0) + 1;
       return acc;
     }, {}),
     active: vehicles.length,
-  };
+  }), [vehicles]);
+
+  // Socket location update handler
+  const handleLocationUpdate = useCallback((data) => {
+    if (data.userId !== user?.id) return;
+    setVehicles(prev => prev.map(v => 
+      v.vehicleId === data.vehicleId 
+        ? { ...v, lat: data.lat, lng: data.lng } 
+        : v
+    ));
+  }, [user?.id]);
 
   // Load vehicles
   useEffect(() => {
@@ -129,17 +145,10 @@ const MapView = () => {
         toast.error("Failed to load vehicles");
       });
 
-    socket.on("locationUpdate", (data) => {
-      if (data.userId !== user.id) return;
-      setVehicles(prev => prev.map(v => 
-        v.vehicleId === data.vehicleId 
-          ? { ...v, lat: data.lat, lng: data.lng } 
-          : v
-      ));
-    });
+    socket.on("locationUpdate", handleLocationUpdate);
 
-    return () => socket.off("locationUpdate");
-  }, [url, user, socket]);
+    return () => socket.off("locationUpdate", handleLocationUpdate);
+  }, [url, user, socket, handleLocationUpdate]);
 
   // Map click handler
   const LocationSelector = () => {
@@ -159,14 +168,14 @@ const MapView = () => {
   };
 
   // Add vehicle
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (!newVehicle.name || !newVehicle.lat || !newVehicle.lng) {
       toast.warning("Please fill all fields and select a location!");
       return;
     }
 
-    setLoading({ ...loading, adding: true });
+    setLoading(prev => ({ ...prev, adding: true }));
 
     try {
       const res = await axios.post(`${url}/vehicles/add`, {
@@ -182,15 +191,15 @@ const MapView = () => {
       console.error(err);
       toast.error("Failed to add vehicle");
     } finally {
-      setLoading({ ...loading, adding: false });
+      setLoading(prev => ({ ...prev, adding: false }));
     }
-  };
+  }, [newVehicle, url, user.id]);
 
   // Delete vehicle
-  const handleStop = async (vehicleId) => {
+  const handleStop = useCallback(async (vehicleId) => {
     if (!window.confirm("Are you sure you want to remove this vehicle?")) return;
 
-    setLoading({ ...loading, removing: true, removingId: vehicleId });
+    setLoading(prev => ({ ...prev, removing: true, removingId: vehicleId }));
 
     try {
       await fetch(`${url}/vehicles/${user.id}/${vehicleId}`, { 
@@ -202,9 +211,9 @@ const MapView = () => {
       console.error(err);
       toast.error("Error removing vehicle");
     } finally {
-      setLoading({ ...loading, removing: false, removingId: null });
+      setLoading(prev => ({ ...prev, removing: false, removingId: null }));
     }
-  };
+  }, [url, user.id]);
 
   return (
     <div className="relative w-full h-screen bg-gray-50">
@@ -300,7 +309,7 @@ const MapView = () => {
             <Marker 
               key={v.vehicleId} 
               position={[v.lat, v.lng]} 
-              icon={icons[v.type] || icons.car}
+              icon={getVehicleIcon(v)}
             >
               <Popup>
                 <VehiclePopup 
