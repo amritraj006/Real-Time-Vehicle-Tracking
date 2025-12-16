@@ -6,6 +6,7 @@ import { Routes, Route } from 'react-router-dom';
 import Lander from './pages/Lander';
 import About from './pages/About';
 import Community from './pages/Community';
+import NotFound from './components/NotFound';
 
 const App = () => {
   return (
@@ -17,6 +18,8 @@ const App = () => {
         <Route path="/track/:vehicleId" element={<Lander />} />
         <Route path='/about' element={<About />} />
         <Route path='/community' element={<Community />} />
+        <Route path="*" element={<NotFound />} />
+        
       </Routes>
     </>
   );
