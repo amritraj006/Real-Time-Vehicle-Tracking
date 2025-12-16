@@ -10,7 +10,7 @@ const Hero = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [openVideoModal, setOpenVideoModal] = useState(false);
-  const {totalUsers} = useAppContext();
+  const {totalUsers, users} = useAppContext();
 
   const logos = [
     "https://saasly.prebuiltui.com/assets/companies-logo/instagram.svg",
@@ -136,12 +136,18 @@ const Hero = () => {
           {/* Avatars + Stars */}
           <div className="flex items-center mt-24">
             <div className="flex -space-x-3 pr-3">
-              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200" alt="user3" className="size-8 object-cover rounded-full border-2 border-white hover:-translate-y-0.5 transition z-[1]" />
-              <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200" alt="user1" className="size-8 object-cover rounded-full border-2 border-white hover:-translate-y-0.5 transition z-2" />
-              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200" alt="user2" className="size-8 object-cover rounded-full border-2 border-white hover:-translate-y-0.5 transition z-[3]" />
-              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200" alt="user3" className="size-8 object-cover rounded-full border-2 border-white hover:-translate-y-0.5 transition z-[4]" />
-              <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="user5" className="size-8 rounded-full border-2 border-white hover:-translate-y-0.5 transition z-[5]" />
-            </div>
+  {users.slice(0, 5).map((user, index) => (
+    <img
+      key={user._id}
+      src={user.image}
+      alt={user.name}
+      title={user.name}
+      className={`size-8 object-cover rounded-full border-2 border-white
+        hover:-translate-y-0.5 transition z-[${index + 1}]`}
+    />
+  ))}
+</div>
+
 
             <div>
               <div className="flex">
@@ -166,7 +172,7 @@ const Hero = () => {
                     </svg>
                   ))}
               </div>
-              <p className="text-sm text-gray-700">Used by {totalUsers} users</p>
+              <p className="text-sm text-gray-700">Used by {totalUsers}+ users</p>
             </div>
           </div>
 

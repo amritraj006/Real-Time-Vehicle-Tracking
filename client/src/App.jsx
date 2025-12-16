@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import { Routes, Route } from 'react-router-dom';
 import Lander from './pages/Lander';
 import About from './pages/About';
+import Community from './pages/Community';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
         <Route path="/map" element={<MapView />} />
         <Route path="/track/:vehicleId" element={<Lander />} />
         <Route path='/about' element={<About />} />
+        <Route path='/community' element={<Community />} />
       </Routes>
     </>
   );

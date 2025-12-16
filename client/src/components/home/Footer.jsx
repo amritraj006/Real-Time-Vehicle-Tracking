@@ -30,7 +30,7 @@ const Footer = () => {
                         <ul className="mt-2 space-y-2">
                             <li><a href="/" className="hover:text-green-600 transition">Company</a></li>
                             <li><a href="/" className="hover:text-green-600 transition">Blogs</a></li>
-                            <li><a href="/" className="hover:text-green-600 transition">Community</a></li>
+                            <li><a href="/community" className="hover:text-green-600 transition">Community</a></li>
                             <li><a href="/about" className="hover:text-green-600 transition">About</a></li>
                             <li><a href="https://real-time-vehicle-tracking-admin.onrender.com">Admin</a></li>
                         </ul>
