@@ -1,4 +1,3 @@
-
 import MapView from './pages/MapView';
 import LandingPage from './pages/LandingPage';
 import Home from './pages/Home';
@@ -19,7 +18,6 @@ const App = () => {
         <Route path='/about' element={<About />} />
         <Route path='/community' element={<Community />} />
         <Route path="*" element={<NotFound />} />
-        
       </Routes>
     </>
   );

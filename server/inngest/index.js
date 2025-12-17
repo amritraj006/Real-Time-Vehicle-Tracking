@@ -1,6 +1,6 @@
 import { Inngest } from "inngest";
 import User from "../models/UserModel.js";
-
+import Vehicle from '../models/VehicleModel.js'
 // Create a client to send and receive events
 
 const inngest = new Inngest({ id: "real-time-vehicle-track" });
@@ -31,6 +31,7 @@ const syncUserDeletion = inngest.createFunction(
     async ({ event }) => {
         // Logic to delete user data from database
         const {id} = event.data;
+        await Vehicle.deleteMany({userId: id});
         await User.findByIdAndDelete(id);
     }
 )
