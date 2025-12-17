@@ -193,7 +193,7 @@ const MapView = () => {
     } finally {
       setLoading(prev => ({ ...prev, adding: false }));
     }
-  }, [newVehicle, url, user.id]);
+  }, [newVehicle, url, user?.id]);
 
   // Delete vehicle
   const handleStop = useCallback(async (vehicleId) => {
@@ -213,7 +213,7 @@ const MapView = () => {
     } finally {
       setLoading(prev => ({ ...prev, removing: false, removingId: null }));
     }
-  }, [url, user.id]);
+  }, [url, user?.id]);
 
   return (
     <div className="relative w-full h-screen bg-gray-50">
