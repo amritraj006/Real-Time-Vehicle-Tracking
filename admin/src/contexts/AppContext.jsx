@@ -33,9 +33,11 @@ export const AppProvider = ({ children }) => {
       ? "https://real-time-vehicle-tracking-frontend.onrender.com"
       : "http://localhost:5173";
 
+      const [isAdmin, setIsAdmin] = useState(false);
+
 
   return (
-    <AppContext.Provider value={{ url, socket, frontendUrl }}>
+    <AppContext.Provider value={{ url, socket, frontendUrl, isAdmin, setIsAdmin }}>
       {children}
     </AppContext.Provider>
   );

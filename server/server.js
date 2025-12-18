@@ -48,33 +48,55 @@ app.use("/api/users", userRoutes);
 setInterval(async () => {
   try {
     const vehicles = await Vehicle.find();
+
     for (const v of vehicles) {
       try {
-        // Randomly simulate small movement
-        v.lat += (Math.random() - 0.5) * 0.001;
-        v.lng += (Math.random() - 0.5) * 0.001;
+
+        // 🔧 Fix missing direction (VERY IMPORTANT)
+        if (typeof v.direction !== "number") {
+          v.direction = Math.random() * 360;
+        }
+
+        const SPEED = 0.0002;
+
+        // 🔄 Occasionally turn
+        if (Math.random() < 0.15) {
+          v.direction += (Math.random() - 0.5) * 25;
+        }
+
+        const rad = (v.direction * Math.PI) / 180;
+
+        // 🚗 Move forward
+        v.lat += SPEED * Math.cos(rad);
+        v.lng += SPEED * Math.sin(rad);
+
+        // 🛣 Save route
+        v.route.push({ lat: v.lat, lng: v.lng });
+        if (v.route.length > 100) v.route.shift();
+
         v.updatedAt = new Date();
         await v.save();
 
-        // Emit with userId so frontend filters properly
         io.emit("locationUpdate", {
+          vehicleId: v.vehicleId,
           name: v.name,
           type: v.type,
           userId: v.userId,
-          vehicleId: v.vehicleId,
           lat: v.lat,
           lng: v.lng,
+          route: v.route,
         });
+
       } catch (vehicleError) {
-        // Skip vehicles that might have been deleted
-        console.warn(`⚠️ Skipping update for vehicle ${v.vehicleId}:`, vehicleError.message);
-        continue;
+        console.warn(`⚠️ Vehicle skipped ${v.vehicleId}`, vehicleError.message);
       }
     }
   } catch (error) {
-    console.error("❌ Error in vehicle update interval:", error);
+    console.error("❌ Interval error:", error);
   }
 }, 5000);
+
+
 
 app.get("/", (req, res) => res.send("🚗 Real-Time Vehicle Tracking API Running"));
 

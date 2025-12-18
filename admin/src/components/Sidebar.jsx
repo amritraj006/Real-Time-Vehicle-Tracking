@@ -62,6 +62,9 @@ const Sidebar = ({ activeTab, setActiveTab, socket }) => {
             </span>
           </div>
         </div>
+
+
+
       </div>
     </aside>
   );

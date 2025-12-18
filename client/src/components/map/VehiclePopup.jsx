@@ -111,47 +111,7 @@ const VehiclePopup = ({ vehicle, handleStop, isLoading }) => {
             <p className="font-bold text-gray-900">{metrics.speed} <span className="text-xs font-normal text-gray-500">km/h</span></p>
           </div>
           
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <FaGasPump className="text-gray-600 text-sm" />
-              <span className="text-xs text-gray-500">Fuel</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className={`h-full rounded-full ${metrics.fuelLevel > 25 ? 'bg-emerald-500' : 'bg-red-500'}`}
-                  style={{ width: `${metrics.fuelLevel}%` }}
-                ></div>
-              </div>
-              <span className="text-xs font-bold">{metrics.fuelLevel}%</span>
-            </div>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <FaBolt className="text-gray-600 text-sm" />
-              <span className="text-xs text-gray-500">Battery</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className="h-full bg-blue-500 rounded-full"
-                  style={{ width: `${metrics.battery}%` }}
-                ></div>
-              </div>
-              <span className="text-xs font-bold">{metrics.battery}%</span>
-            </div>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <FaWrench className="text-gray-600 text-sm" />
-              <span className="text-xs text-gray-500">Health</span>
-            </div>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${getHealthColor(metrics.health)}`}>
-              {metrics.health}
-            </span>
-          </div>
+         
         </div>
 
         {/* Last Updated */}

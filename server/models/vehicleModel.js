@@ -1,5 +1,14 @@
 import mongoose from "mongoose";
 
+const locationSchema = new mongoose.Schema(
+  {
+    lat: Number,
+    lng: Number,
+    timestamp: { type: Date, default: Date.now }
+  },
+  { _id: false }
+);
+
 const vehicleSchema = new mongoose.Schema(
   {
     vehicleId: { type: String, required: true, unique: true },
@@ -9,18 +18,20 @@ const vehicleSchema = new mongoose.Schema(
       enum: ["car", "bike", "truck", "bus"],
       default: "car",
     },
+
+    // current position
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
 
-    // Clerk userId (matches User._id)
-    userId: { type: String, ref: "User", required: true },
+    // route history
+    route: [locationSchema],
 
-    updatedAt: { type: Date, default: Date.now },
+    userId: { type: String, ref: "User", required: true },
   },
   { timestamps: true }
 );
 
-// Prevent model overwrite in dev
-const Vehicle = mongoose.models.Vehicle || mongoose.model("Vehicle", vehicleSchema);
+const Vehicle =
+  mongoose.models.Vehicle || mongoose.model("Vehicle", vehicleSchema);
 
 export default Vehicle;

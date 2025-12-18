@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { useAppContext } from "../../../admin/src/contexts/AppContext";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const {setIsAdmin} = useAppContext();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -22,6 +25,7 @@ const AdminLogin = () => {
       if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         setError("");
         toast.success("Login successful! Redirecting...");
+        setIsAdmin(true);
         
         setTimeout(() => {
           navigate("/admin-dashboard");

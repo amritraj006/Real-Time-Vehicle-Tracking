@@ -9,8 +9,9 @@ export const getActiveVehicles = async (req, res) => {
     const sinceTime = new Date(Date.now() - TEN_SECONDS);
 
     const activeVehicles = await Vehicle.find({
-      updatedAt: { $gte: sinceTime }
-    }).select("vehicleId name type lat lng updatedAt");
+  updatedAt: { $gte: sinceTime }
+}).select("vehicleId name type lat lng route updatedAt"); // ✅ route added
+
 
     res.json({ vehicles: activeVehicles });   // FIXED 🔥🔥
   } catch (error) {
@@ -38,13 +39,15 @@ export const addVehicle = async (req, res) => {
 
     // Create vehicle
     const vehicle = await Vehicle.create({
-      vehicleId,
-      name,
-      type,
-      lat,
-      lng,
-      userId,
-    });
+  vehicleId,
+  name,
+  type,
+  lat,
+  lng,
+  userId,
+  route: [{ lat, lng }], // ✅ start route from initial point
+});
+
 
     // Save ONLY vehicle name to user's vehicles list
     await User.findByIdAndUpdate(
@@ -66,13 +69,17 @@ export const addVehicle = async (req, res) => {
 export const getVehiclesByUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const vehicles = await Vehicle.find({ userId });
+
+    const vehicles = await Vehicle.find({ userId })
+      .select("vehicleId name type lat lng route"); // ✅ route added
+
     res.status(200).json(vehicles);
   } catch (error) {
     console.error("❌ Error fetching vehicles:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // ✅ Delete specific vehicle by vehicleId and userId
 export const deleteVehicle = async (req, res) => {
