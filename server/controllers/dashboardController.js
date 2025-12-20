@@ -1,5 +1,5 @@
 import User from "../models/UserModel.js";
-import Vehicle from "../models/vehicleModel.js";
+import Vehicle from "../models/VehicleModel.js";
 
 export const getDashboardStats = async (req, res) => {
   try {

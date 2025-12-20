@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
-import Vehicle from "./models/vehicleModel.js";
+import Vehicle from "./models/VehicleModel.js";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
@@ -33,6 +33,7 @@ const io = new Server(server, {
       "https://real-time-vehicle-tracking-1.onrender.com",
       "https://real-time-vehicle-tracking-admin.onrender.com",
       "http://localhost:5173",
+      "http://localhost:5174",
     ],
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],

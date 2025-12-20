@@ -1,6 +1,6 @@
 import { Inngest } from "inngest";
 import User from "../models/UserModel.js";
-import Vehicle from "../models/vehicleModel.js";
+import Vehicle from "../models/VehicleModel.js";
 // Create a client to send and receive events
 
 const inngest = new Inngest({ id: "real-time-vehicle-track" });

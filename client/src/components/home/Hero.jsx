@@ -172,10 +172,10 @@ const Hero = () => {
                     </svg>
                   ))}
               </div>
-              <p className="text-sm text-gray-700">Used by {totalUsers}+ users</p>
+              <p className="text-sm text-gray-700">Used by {totalUsers - 1}+ users</p>
             </div>
           </div>
-
+ 
           {/* Headline + CTA */}
           <h1 className="text-5xl md:text-6xl font-semibold max-w-5xl text-center mt-4 md:leading-[70px]">
             Track your vehicles in{" "}
