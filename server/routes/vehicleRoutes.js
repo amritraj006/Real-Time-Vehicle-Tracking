@@ -4,8 +4,8 @@ import {
   getVehiclesByUser,
   deleteVehicle,
   getVehicleById,
-  getActiveVehicles
-} from "../controllers/VehicleController.js";
+  getActiveVehicles 
+} from "../controllers/vehicleController.js"
 
 
 const router = express.Router();
