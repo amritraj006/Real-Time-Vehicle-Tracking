@@ -32,7 +32,7 @@ const About = () => {
       name: "Amrit Raj",
       role: "Team Lead & Full Stack Developer",
       description: "Leads the team with 1+ years MERN stack experience. Excels in architecture design, API development, and project management. Ensures best practices across the stack.",
-      image: "https://media.licdn.com/dms/image/v2/D5635AQF2I8ouSN5LjA/profile-framedphoto-shrink_400_400/B56Zr_IrUTIsAg-/0/1765217056810?e=1765825200&v=beta&t=3o8GfVOY6-BwBElnudZiseBGHh5mXOKERaXwfaKRKJ8",
+      image: "https://media.licdn.com/dms/image/v2/D5635AQF2I8ouSN5LjA/profile-framedphoto-shrink_400_400/B56Zr_IrUTIsAg-/0/1765217056810?e=1767074400&v=beta&t=stuvEKUQgzAxLgK8IGKz0CmHeOfLmjGoviSwDZT7AEI",
       github: "https://github.com/amritraj006",
       linkedin: "https://www.linkedin.com/in/amrit-raj-54652b294/",
       instagram: "https://instagram.com/sam.codes",
