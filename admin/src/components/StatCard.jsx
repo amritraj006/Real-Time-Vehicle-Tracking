@@ -5,7 +5,7 @@ const StatCard = ({ card }) => {
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 p-6 border border-gray-100">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-xl ${card.color} bg-opacity-10`}>
-          <card.icon className={`w-6 h-6 ${card.color.replace('bg-', 'text-')}`} />
+          <card.icon className={`w-6 h-6 ${card.color.replace('bg-', 'text-')} text-white`} />
         </div>
         <span className="text-xs font-semibold px-3 py-1 rounded-full bg-gray-100 text-gray-600">
           LIVE

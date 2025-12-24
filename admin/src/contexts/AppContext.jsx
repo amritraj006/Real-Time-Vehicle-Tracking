@@ -28,6 +28,9 @@ export const AppProvider = ({ children }) => {
     [socketUrl]
   );
 
+
+
+
   const frontendUrl =
     import.meta.env.MODE === "production"
       ? "https://real-time-vehicle-tracking-frontend.onrender.com"
@@ -35,9 +38,21 @@ export const AppProvider = ({ children }) => {
 
       const [isAdmin, setIsAdmin] = useState(false);
 
+      const [users, setUsers] = useState([]);
+
+      const fetchUsers = async () => {
+        const res = await fetch(`${url}/users`);
+        const data = await res.json();
+        setUsers(data);
+      }
+
+      useEffect(() => {
+        fetchUsers();
+      })
+
 
   return (
-    <AppContext.Provider value={{ url, socket, frontendUrl, isAdmin, setIsAdmin }}>
+    <AppContext.Provider value={{ url, socket, frontendUrl, isAdmin, setIsAdmin, users }}>
       {children}
     </AppContext.Provider>
   );

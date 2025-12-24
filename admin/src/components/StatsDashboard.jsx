@@ -1,5 +1,5 @@
 import React from "react";
-import { Users, Truck, Navigation, Activity, BarChart3, Clock } from "lucide-react";
+import { Users, Truck, Navigation, Activity, BarChart3, Clock, Redo, TruckElectric } from "lucide-react";
 import StatCard from "./StatCard";
 
 const StatsDashboard = ({ stats, vehicles }) => {
@@ -7,7 +7,7 @@ const StatsDashboard = ({ stats, vehicles }) => {
     { 
       title: "Total Users", 
       value: stats.totalUsers,
-      icon: Users,
+      icon: Truck,
       color: "bg-blue-500",
       gradient: "from-blue-500 to-blue-600"
     },
@@ -62,7 +62,7 @@ const StatsDashboard = ({ stats, vehicles }) => {
           <div className="space-y-4">
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-600">Vehicle Activity Rate</span>
-              <span className="font-semibold text-green-600">
+              <span className="font-semibold text-green-500">
                 {stats.totalVehiclesAdded > 0 
                   ? `${((stats.activeVehicles / stats.totalVehiclesAdded) * 100).toFixed(1)}%`
                   : "0%"}
@@ -70,7 +70,7 @@ const StatsDashboard = ({ stats, vehicles }) => {
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-600">Avg Vehicles per User</span>
-              <span className="font-semibold text-blue-600">
+              <span className="font-semibold text-green-500">
                 {stats.totalUsers > 0 
                   ? (stats.totalVehiclesAdded / stats.totalUsers).toFixed(1)
                   : "0"}
@@ -95,7 +95,7 @@ const StatsDashboard = ({ stats, vehicles }) => {
             </div>
             <div className="w-full bg-gray-700 h-2 rounded-full overflow-hidden mt-4">
               <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500"
+                className="h-full bg-linear-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
                 style={{ 
                   width: `${Math.min((stats.activeVehicles / (stats.totalVehiclesAdded || 1)) * 100, 100)}%` 
                 }}

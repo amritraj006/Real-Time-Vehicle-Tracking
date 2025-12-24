@@ -12,7 +12,7 @@ const UserCard = ({ user }) => {
               alt={user.name}
               className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-md"
             />
-            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+
           </div>
           <div>
             <h3 className="text-lg font-bold text-gray-900">{user.name}</h3>
@@ -29,7 +29,7 @@ const UserCard = ({ user }) => {
               <Truck size={16} />
               Assigned Vehicles
             </h4>
-            <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
+            <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
               {user.vehicles?.length || 0}
             </span>
           </div>
@@ -42,7 +42,7 @@ const UserCard = ({ user }) => {
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <span className="text-gray-700 font-medium">{vehicle}</span>
-                  <Navigation size={14} className="text-gray-400" />
+                  
                 </div>
               ))}
               {user.vehicles.length > 3 && (

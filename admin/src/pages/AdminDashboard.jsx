@@ -24,6 +24,7 @@ const AdminDashboard = () => {
   const [mapLoading, setMapLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("stats");
+  
 
   // ------------------ Fetch Dashboard Data ------------------
   const fetchData = async () => {

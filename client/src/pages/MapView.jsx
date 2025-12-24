@@ -10,7 +10,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AddVehicleForm from "../components/map/AddVehicleForm";
 import VehiclePopup from "../components/map/VehiclePopup";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Fix: Create custom icons with proper URLs (Vite / ES modules)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -123,6 +123,8 @@ const MapView = () => {
   const [activeVehicle, setActiveVehicle] = useState(null);
   const { user } = useUser();
   const mapRef = useRef();
+
+  const navigate = useNavigate();
 
   // Calculate vehicle stats
   const vehicleStats = useMemo(() => ({
@@ -296,13 +298,17 @@ const MapView = () => {
         </div>
         
         <div className="space-y-5">
-          <div className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
+          <div onClick={() => navigate('/user-dashboard')}
+          className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
+            
             <div className="flex items-center justify-between">
+              
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <Users className="text-blue-600" size={18} />
                 </div>
-                <div>
+                <div >
+                  
                   <p className="text-sm text-gray-600">Total Vehicles</p>
                   <p className="text-2xl font-bold text-gray-900">{vehicleStats.total}</p>
                 </div>

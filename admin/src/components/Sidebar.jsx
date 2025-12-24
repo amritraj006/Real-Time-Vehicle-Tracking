@@ -12,11 +12,11 @@ const Sidebar = ({ activeTab, setActiveTab, socket }) => {
     <aside className="lg:w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl lg:h-screen lg:sticky lg:top-0">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-gradient-to-br from-green-600 to-blue-700 rounded-xl">
+          <div className="p-2 bg-gradient-to-br from-green-500 to-green-700 rounded-xl">
             <Shield className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-800 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold bg-green-600 bg-clip-text text-transparent">
               Admin Panel
             </h2>
             <p className="text-xs text-gray-500">Real-time Tracking System</p>
@@ -30,17 +30,17 @@ const Sidebar = ({ activeTab, setActiveTab, socket }) => {
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                 activeTab === item.id
-                  ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-l-4 border-blue-600 shadow-md"
+                  ? "bg-gradient-to-r from-blue-50 to-blue-100 text-green-500 border-l-4 border-green-600 shadow-md"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               <item.icon 
                 size={20} 
-                className={activeTab === item.id ? "text-blue-600" : "text-gray-500"} 
+                className={activeTab === item.id ? "text-green-500" : "text-gray-500"} 
               />
               <span className="font-medium">{item.label}</span>
               {activeTab === item.id && (
-                <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                <div className="ml-auto w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
               )}
             </button>
           ))}
@@ -62,6 +62,7 @@ const Sidebar = ({ activeTab, setActiveTab, socket }) => {
             </span>
           </div>
         </div>
+        
 
 
 

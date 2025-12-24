@@ -6,6 +6,7 @@ import Lander from './pages/Lander';
 import About from './pages/About';
 import Community from './pages/Community';
 import NotFound from './components/NotFound';
+import UserDashboard from './pages/UserDashboard';
 
 const App = () => {
   return (
@@ -17,6 +18,7 @@ const App = () => {
         <Route path="/track/:vehicleId" element={<Lander />} />
         <Route path='/about' element={<About />} />
         <Route path='/community' element={<Community />} />
+        <Route path='/user-dashboard' element={<UserDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
