@@ -7,6 +7,7 @@ import About from './pages/About';
 import Community from './pages/Community';
 import NotFound from './components/NotFound';
 import UserDashboard from './pages/UserDashboard';
+import Company from './pages/Company';
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
         <Route path='/about' element={<About />} />
         <Route path='/community' element={<Community />} />
         <Route path='/user-dashboard' element={<UserDashboard />} />
+        <Route path='/company' element={<Company />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
