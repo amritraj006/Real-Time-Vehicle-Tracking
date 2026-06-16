@@ -1,8 +1,12 @@
 # Ignore node_modules for backend
 server/node_modules/
+client/node_modules/
+admin/node_modules/
 
 # Ignore backend environment files
 server/.env
+client/.env
+admin/.env
 
 # Ignore common files
 .DS_Store
