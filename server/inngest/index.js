@@ -1,12 +1,12 @@
 import { Inngest } from "inngest";
 import User from "../models/UserModel.js";
-import Vehicle from "../models/VehicleModel.js"
-// Create a client to send and receive events
+import Vehicle from "../models/VehicleModel.js";
+import { deleteCache } from "../config/redis.js";
 
+// Create a client to send and receive events
 const inngest = new Inngest({ id: "real-time-vehicle-track" });
 
-//Inngest function to save user data to database
-
+// Inngest function to save user data to database
 const syncUserCreation = inngest.createFunction(
     {id: 'sync-user-from-clerk'},
     {event: 'clerk/user.created'},
@@ -20,11 +20,13 @@ const syncUserCreation = inngest.createFunction(
             image: image_url
         }
         await User.create(userData);
+
+        // 🔄 Invalidate cached user list and dashboard stats
+        await deleteCache("cache:users:all", "cache:dashboard:stats");
     }
 )
 
-//Inngest function to delete user from database
-
+// Inngest function to delete user from database
 const syncUserDeletion = inngest.createFunction(
     {id: 'delete-user-with-clerk'},
     {event: 'clerk/user.deleted'},
@@ -33,11 +35,18 @@ const syncUserDeletion = inngest.createFunction(
         const {id} = event.data;
         await Vehicle.deleteMany({userId: id});
         await User.findByIdAndDelete(id);
+
+        // 🔄 Invalidate cached user list, user's vehicles, and dashboard stats
+        await deleteCache(
+            "cache:users:all",
+            "cache:dashboard:stats",
+            `cache:vehicles:user:${id}`,
+            "cache:vehicles:active"
+        );
     }
 )
 
-//Inngest function to update user in database
-
+// Inngest function to update user in database
 const syncUserUpdation = inngest.createFunction(
     {id: 'update-user-from-clerk'},
     {event: 'clerk/user.updated'},
@@ -51,6 +60,9 @@ const syncUserUpdation = inngest.createFunction(
             image: image_url
         }
         await User.findByIdAndUpdate(id, userData);
+
+        // 🔄 Invalidate cached user list
+        await deleteCache("cache:users:all");
     }
 )
 
