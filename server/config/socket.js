@@ -1,8 +1,15 @@
 // config/socket.js
+// --------------------------------------------------
+// Socket.IO setup.
+// - initSocket() wires Socket.IO to the HTTP server.
+// - getIO() is used by other files to emit events.
+// --------------------------------------------------
+
 import { Server } from "socket.io";
 
-let io;
+let io; // Shared Socket.IO instance
 
+// Initialize Socket.IO — call this once in server.js
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
@@ -28,9 +35,8 @@ export const initSocket = (server) => {
   return io;
 };
 
+// Get the shared Socket.IO instance — used in services to emit events
 export const getIO = () => {
-  if (!io) {
-    throw new Error("❌ Socket.io not initialized");
-  }
+  if (!io) throw new Error("❌ Socket.IO not initialized. Call initSocket() first.");
   return io;
 };
