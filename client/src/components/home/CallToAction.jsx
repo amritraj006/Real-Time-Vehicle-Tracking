@@ -10,9 +10,9 @@ const CallToAction = () => {
   const handleStartTracking = (e) => {
     e.preventDefault();
     if (!user) {
-      openSignIn(); // Open Clerk login if not logged in
+      openSignIn();
     } else {
-      navigate("/map"); // Go to map if logged in
+      navigate("/map");
     }
   };
 

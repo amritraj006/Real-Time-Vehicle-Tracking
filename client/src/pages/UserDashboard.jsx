@@ -1,9 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const UserDashboard = () => {
-  return (
-    <div>UserDashboard</div>
-  )
-}
+  return <div>UserDashboard</div>;
+};
 
-export default UserDashboard
+export default UserDashboard;

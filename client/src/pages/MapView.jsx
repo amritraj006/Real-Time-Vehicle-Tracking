@@ -1,90 +1,18 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Polyline, Circle } from "react-leaflet";
-import axios from "axios";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import { useAppContext } from "../contexts/AppContext";
-import { Plus, Car, Bike, Truck, Bus, Users, Activity, Loader2, Navigation, Zap, MapPin } from "lucide-react";
+import { Plus, Car, Bike, Truck, Bus, Users, Activity, Loader2, Navigation, Zap } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import AddVehicleForm from "../components/map/AddVehicleForm";
-import VehiclePopup from "../components/map/VehiclePopup";
 import { Link, useNavigate } from "react-router-dom";
 
-// Fix: Create custom icons with proper URLs (Vite / ES modules)
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: new URL("../../node_modules/leaflet/dist/images/marker-icon-2x.png", import.meta.url).href,
-  iconUrl: new URL("../../node_modules/leaflet/dist/images/marker-icon.png", import.meta.url).href,
-  shadowUrl: new URL("../../node_modules/leaflet/dist/images/marker-shadow.png", import.meta.url).href,
-});
-
-// Enhanced vehicle type data with gradient colors
-const vehicleTypeData = {
-  car: { 
-    color: "#3B82F6",
-    gradient: "linear-gradient(135deg, #3B82F6, #60A5FA)",
-    light: "rgba(59, 130, 246, 0.1)",
-    svg: `<svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M5 11l2-2h10l2 2v6H5v-6z"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/></svg>` 
-  },
-  bike: { 
-    color: "#EF4444",
-    gradient: "linear-gradient(135deg, #EF4444, #F87171)",
-    light: "rgba(239, 68, 68, 0.1)",
-    svg: `<svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M12 2l3 3h-2v2h2l-3 3-3-3h2V5H9l3-3z"/><circle cx="7" cy="16" r="3"/><circle cx="17" cy="16" r="3"/><path d="M7 13v-2h10v2H7z"/></svg>` 
-  },
-  truck: { 
-    color: "#F59E0B",
-    gradient: "linear-gradient(135deg, #F59E0B, #FBBF24)",
-    light: "rgba(245, 158, 11, 0.1)",
-    svg: `<svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M3 7h18v10H3V7z"/><path d="M3 7l2-4h14l2 4"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/></svg>` 
-  },
-  bus: { 
-    color: "#10B981",
-    gradient: "linear-gradient(135deg, #10B981, #34D399)",
-    light: "rgba(16, 185, 129, 0.1)",
-    svg: `<svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M3 7h18v10H3V7z"/><path d="M3 7l2-4h14l2 4"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/><path d="M7 11h2v2H7v-2z"/><path d="M11 11h2v2h-2v-2z"/><path d="M15 11h2v2h-2v-2z"/></svg>` 
-  },
-};
-
-// Modern Vehicle Icon with pulsing effect
-const getVehicleIcon = (vehicle) => {
-  const { color, gradient, svg } = vehicleTypeData[vehicle.type] || vehicleTypeData.car;
-
-  return L.divIcon({
-    html: `
-      <div class="vehicle-marker-container">
-        <div class="vehicle-pulse" style="background: ${color}"></div>
-        <div class="vehicle-icon" style="background: ${gradient}">
-          ${svg}
-        </div>
-        <div class="vehicle-label">
-          ${vehicle.name}
-        </div>
-      </div>
-    `,
-    className: "custom-vehicle-icon",
-    iconSize: [70, 70],
-    iconAnchor: [35, 70],
-    popupAnchor: [0, -70],
-  });
-};
-
-// Preview marker for new vehicle
-const previewIcon = L.divIcon({
-  html: `
-    <div class="preview-marker">
-      <div class="preview-pulse"></div>
-      <div class="preview-icon">
-        <MapPin size={18} />
-      </div>
-    </div>
-  `,
-  className: "preview-vehicle-icon",
-  iconSize: [50, 50],
-  iconAnchor: [25, 50],
-});
+import { useAppContext } from "../contexts/AppContext";
+import { getVehiclesByUser, addVehicle as apiAddVehicle, deleteVehicle as apiDeleteVehicle } from "../api/vehicleApi";
+import { vehicleTypeData, getRouteColor } from "../constants/vehicleConfig";
+import { getVehicleDivIcon, previewMarkerIcon } from "../utils/leafletSetup";
+import AddVehicleForm from "../components/map/AddVehicleForm";
+import VehiclePopup from "../components/map/VehiclePopup";
 
 // Stats icons mapping
 const statsIcons = {
@@ -94,39 +22,27 @@ const statsIcons = {
   bus: <Bus className="text-green-500" size={20} />,
 };
 
-// Enhanced route color with gradients
-const getRouteColor = (type) => {
-  const colors = {
-    car: "#3B82F6",
-    bike: "#EF4444",
-    truck: "#F59E0B",
-    bus: "#10B981"
-  };
-  return colors[type] || "#10B981";
-};
-
 const MapView = () => {
   const [vehicles, setVehicles] = useState([]);
-  const { url, socket } = useAppContext();
+  const { socket } = useAppContext();
   const [open, setOpen] = useState(false);
-  const [newVehicle, setNewVehicle] = useState({ 
-    name: "", 
-    type: "car", 
-    lat: null, 
-    lng: null 
+  const [newVehicle, setNewVehicle] = useState({
+    name: "",
+    type: "car",
+    lat: null,
+    lng: null,
   });
   const [loading, setLoading] = useState({
     adding: false,
     removing: false,
-    removingId: null
+    removingId: null,
   });
   const [activeVehicle, setActiveVehicle] = useState(null);
   const { user } = useUser();
   const mapRef = useRef();
-
   const navigate = useNavigate();
 
-  // Calculate vehicle stats
+  // Calculate vehicle telemetry stats
   const vehicleStats = useMemo(() => ({
     total: vehicles.length,
     byType: vehicles.reduce((acc, vehicle) => {
@@ -136,58 +52,65 @@ const MapView = () => {
     active: vehicles.length,
   }), [vehicles]);
 
-  // Socket location update handler
+  // Socket location update handler for real-time fleet movement
   const handleLocationUpdate = useCallback((data) => {
     if (data.userId !== user?.id) return;
 
-    setVehicles(prev =>
-      prev.map(v =>
+    setVehicles((prev) =>
+      prev.map((v) =>
         v.vehicleId === data.vehicleId
           ? {
               ...v,
               lat: data.lat,
               lng: data.lng,
-              route: data.route || v.route
+              route: data.route || v.route,
             }
           : v
       )
     );
   }, [user?.id]);
 
-  // Load vehicles
+  // Load user's vehicles on mount or when user changes
   useEffect(() => {
     if (!user) return;
 
-    axios.get(`${url}/vehicles/${user.id}`)
-      .then(res => setVehicles(res.data))
-      .catch(err => {
+    const fetchVehicles = async () => {
+      try {
+        const data = await getVehiclesByUser(user.id);
+        setVehicles(data);
+      } catch (err) {
         console.error("Error fetching vehicles:", err);
         toast.error("Failed to load vehicles");
-      });
+      }
+    };
+
+    fetchVehicles();
 
     socket.on("locationUpdate", handleLocationUpdate);
 
-    return () => socket.off("locationUpdate", handleLocationUpdate);
-  }, [url, user, socket, handleLocationUpdate]);
+    return () => {
+      socket.off("locationUpdate", handleLocationUpdate);
+    };
+  }, [user, socket, handleLocationUpdate]);
 
-  // Map click handler
+  // Map click handler to select latitude/longitude for a new vehicle
   const LocationSelector = () => {
     useMapEvents({
       click(e) {
         if (open) {
-          setNewVehicle(prev => ({ 
-            ...prev, 
-            lat: e.latlng.lat, 
-            lng: e.latlng.lng 
+          setNewVehicle((prev) => ({
+            ...prev,
+            lat: e.latlng.lat,
+            lng: e.latlng.lng,
           }));
           toast.info("📍 Location selected! Fill vehicle details and save.");
         }
-      }
+      },
     });
     return null;
   };
 
-  // Add vehicle
+  // Add and register new vehicle
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (!newVehicle.name || !newVehicle.lat || !newVehicle.lng) {
@@ -195,45 +118,43 @@ const MapView = () => {
       return;
     }
 
-    setLoading(prev => ({ ...prev, adding: true }));
+    setLoading((prev) => ({ ...prev, adding: true }));
 
     try {
-      const res = await axios.post(`${url}/vehicles/add`, {
+      const createdVehicle = await apiAddVehicle({
         ...newVehicle,
         userId: user.id,
-        vehicleId: `VH-${Date.now()}`
+        vehicleId: `VH-${Date.now()}`,
       });
-      setVehicles(prev => [...prev, res.data]);
+      setVehicles((prev) => [...prev, createdVehicle]);
       setOpen(false);
       setNewVehicle({ name: "", type: "car", lat: null, lng: null });
       toast.success("🚗 Vehicle added successfully!");
     } catch (err) {
-      console.error(err);
+      console.error("Error adding vehicle:", err);
       toast.error("Failed to add vehicle");
     } finally {
-      setLoading(prev => ({ ...prev, adding: false }));
+      setLoading((prev) => ({ ...prev, adding: false }));
     }
-  }, [newVehicle, url, user?.id]);
+  }, [newVehicle, user?.id]);
 
-  // Delete vehicle
+  // Remove / Stop vehicle
   const handleStop = useCallback(async (vehicleId) => {
     if (!window.confirm("Are you sure you want to remove this vehicle?")) return;
 
-    setLoading(prev => ({ ...prev, removing: true, removingId: vehicleId }));
+    setLoading((prev) => ({ ...prev, removing: true, removingId: vehicleId }));
 
     try {
-      await fetch(`${url}/vehicles/${user.id}/${vehicleId}`, { 
-        method: "DELETE" 
-      });
-      setVehicles(prev => prev.filter(v => v.vehicleId !== vehicleId));
+      await apiDeleteVehicle(user.id, vehicleId);
+      setVehicles((prev) => prev.filter((v) => v.vehicleId !== vehicleId));
       toast.success("🗑️ Vehicle removed successfully!");
     } catch (err) {
-      console.error(err);
+      console.error("Error removing vehicle:", err);
       toast.error("Error removing vehicle");
     } finally {
-      setLoading(prev => ({ ...prev, removing: false, removingId: null }));
+      setLoading((prev) => ({ ...prev, removing: false, removingId: null }));
     }
-  }, [url, user?.id]);
+  }, [user?.id]);
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -258,7 +179,11 @@ const MapView = () => {
           <div className="flex items-center gap-4">
             <Link to="/home" className="group">
               <div className="relative">
-                <img src="/favicon.svg" alt="Logo" className="h-14 w-14 transition-transform group-hover:scale-105"/>
+                <img
+                  src="/favicon.svg"
+                  alt="Logo"
+                  className="h-14 w-14 transition-transform group-hover:scale-105"
+                />
                 <div className="absolute -inset-2 bg-blue-500/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
             </Link>
@@ -269,8 +194,8 @@ const MapView = () => {
               <p className="text-sm text-gray-600">Real-time vehicle tracking</p>
             </div>
           </div>
-          
-          <button 
+
+          <button
             className="flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-5 py-3 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
             onClick={() => setOpen(true)}
             disabled={loading.adding}
@@ -296,19 +221,18 @@ const MapView = () => {
             <p className="text-xs text-gray-500">Live tracking overview</p>
           </div>
         </div>
-        
+
         <div className="space-y-5">
-          <div onClick={() => navigate('/user-dashboard')}
-          className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
-            
+          <div
+            onClick={() => navigate("/user-dashboard")}
+            className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 cursor-pointer"
+          >
             <div className="flex items-center justify-between">
-              
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <Users className="text-blue-600" size={18} />
                 </div>
-                <div >
-                  
+                <div>
                   <p className="text-sm text-gray-600">Total Vehicles</p>
                   <p className="text-2xl font-bold text-gray-900">{vehicleStats.total}</p>
                 </div>
@@ -321,9 +245,12 @@ const MapView = () => {
             {Object.entries(vehicleStats.byType).map(([type, count]) => {
               const color = vehicleTypeData[type]?.color || "#3B82F6";
               return (
-                <div key={type} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                <div
+                  key={type}
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors"
+                >
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className="p-2 rounded-lg"
                       style={{ backgroundColor: `${color}15` }}
                     >
@@ -334,11 +261,11 @@ const MapView = () => {
                       <p className="text-xs text-gray-500">{count} active</p>
                     </div>
                   </div>
-                  <div 
+                  <div
                     className="px-3 py-1 rounded-full text-sm font-semibold"
-                    style={{ 
+                    style={{
                       backgroundColor: `${color}15`,
-                      color: color
+                      color: color,
                     }}
                   >
                     {count}
@@ -362,35 +289,35 @@ const MapView = () => {
 
       {/* Map Container */}
       <div className="pt-20 w-full h-full">
-        <MapContainer 
-          center={[28.6139, 77.209]} 
-          zoom={12} 
+        <MapContainer
+          center={[28.6139, 77.209]}
+          zoom={12}
           className="w-full h-full rounded-2xl"
           zoomControl={true}
-          style={{ 
-            background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)" 
+          style={{
+            background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
           }}
           ref={mapRef}
         >
-          <TileLayer 
+          <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
           <LocationSelector />
 
-          {vehicles.map(v => (
+          {vehicles.map((v) => (
             <React.Fragment key={v.vehicleId}>
               {/* Vehicle Marker */}
-              <Marker 
-                position={[v.lat, v.lng]} 
-                icon={getVehicleIcon(v)}
+              <Marker
+                position={[v.lat, v.lng]}
+                icon={getVehicleDivIcon(v)}
                 eventHandlers={{
-                  click: () => setActiveVehicle(v.vehicleId)
+                  click: () => setActiveVehicle(v.vehicleId),
                 }}
               >
                 <Popup>
-                  <VehiclePopup 
-                    vehicle={v} 
+                  <VehiclePopup
+                    vehicle={v}
                     handleStop={handleStop}
                     isLoading={loading.removing && loading.removingId === v.vehicleId}
                   />
@@ -402,58 +329,58 @@ const MapView = () => {
                 <>
                   {/* Glow effect */}
                   <Polyline
-                    positions={v.route.map(p => [p.lat, p.lng])}
+                    positions={v.route.map((p) => [p.lat, p.lng])}
                     pathOptions={{
                       color: "white",
                       weight: 12,
                       opacity: 0.4,
                       lineCap: "round",
                       lineJoin: "round",
-                      className: "route-glow"
+                      className: "route-glow",
                     }}
                   />
-                  
+
                   {/* Shadow effect */}
                   <Polyline
-                    positions={v.route.map(p => [p.lat, p.lng])}
+                    positions={v.route.map((p) => [p.lat, p.lng])}
                     pathOptions={{
                       color: "rgba(0, 0, 0, 0.2)",
                       weight: 8,
                       opacity: 0.3,
                       lineCap: "round",
                       lineJoin: "round",
-                      dashArray: activeVehicle === v.vehicleId ? "none" : "15, 20"
+                      dashArray: activeVehicle === v.vehicleId ? "none" : "15, 20",
                     }}
                   />
-                  
+
                   {/* Animated pulse line */}
                   {activeVehicle === v.vehicleId && (
                     <Polyline
-                      positions={v.route.map(p => [p.lat, p.lng])}
+                      positions={v.route.map((p) => [p.lat, p.lng])}
                       pathOptions={{
                         color: "white",
                         weight: 3,
                         opacity: 0.8,
                         lineCap: "round",
                         dashArray: "5, 20",
-                        className: "pulse-line"
+                        className: "pulse-line",
                       }}
                     />
                   )}
 
                   {/* Main route */}
                   <Polyline
-                    positions={v.route.map(p => [p.lat, p.lng])}
+                    positions={v.route.map((p) => [p.lat, p.lng])}
                     pathOptions={{
                       color: getRouteColor(v.type),
                       weight: 6,
                       opacity: activeVehicle === v.vehicleId ? 1 : 0.8,
                       lineCap: "round",
                       lineJoin: "round",
-                      className: "main-route"
+                      className: "main-route",
                     }}
                   />
-                  
+
                   {/* Vehicle position indicator */}
                   <Circle
                     center={[v.lat, v.lng]}
@@ -464,7 +391,7 @@ const MapView = () => {
                       weight: 3,
                       opacity: 1,
                       fillOpacity: 0.8,
-                      className: "vehicle-position-indicator"
+                      className: "vehicle-position-indicator",
                     }}
                   />
                 </>
@@ -473,17 +400,17 @@ const MapView = () => {
           ))}
 
           {open && newVehicle.lat && newVehicle.lng && (
-            <Marker position={[newVehicle.lat, newVehicle.lng]} icon={previewIcon} />
+            <Marker position={[newVehicle.lat, newVehicle.lng]} icon={previewMarkerIcon} />
           )}
         </MapContainer>
       </div>
 
-      {/* Add Vehicle Form */}
+      {/* Add Vehicle Form Drawer */}
       {open && (
-        <AddVehicleForm 
-          newVehicle={newVehicle} 
-          setNewVehicle={setNewVehicle} 
-          setOpen={setOpen} 
+        <AddVehicleForm
+          newVehicle={newVehicle}
+          setNewVehicle={setNewVehicle}
+          setOpen={setOpen}
           handleSubmit={handleSubmit}
           isLoading={loading.adding}
         />
@@ -497,13 +424,16 @@ const MapView = () => {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {Object.entries(vehicleTypeData).map(([type, data]) => (
-            <div key={type} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+            <div
+              key={type}
+              className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+            >
               <div className="relative">
-                <div 
+                <div
                   className="w-4 h-4 rounded-full shadow-md"
                   style={{ background: data.gradient }}
                 ></div>
-                <div 
+                <div
                   className="absolute -inset-1 rounded-full animate-pulse opacity-30"
                   style={{ background: data.color }}
                 ></div>
@@ -519,13 +449,15 @@ const MapView = () => {
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 <div className="absolute -inset-1 bg-purple-500 rounded-full animate-ping opacity-30"></div>
               </div>
-              <span className="text-sm text-purple-600 font-medium">Click map to set location</span>
+              <span className="text-sm text-purple-600 font-medium">
+                Click map to set location
+              </span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Custom Styles */}
+      {/* Map and Marker Styles */}
       <style>{`
         @keyframes pulse-ring {
           0% { transform: scale(0.8); opacity: 0.5; }

@@ -1,11 +1,15 @@
+import React from "react";
 import { X, Loader2 } from "lucide-react";
 
+/**
+ * Slide-over drawer form for registering a new vehicle to the user's fleet.
+ */
 const AddVehicleForm = ({
   newVehicle,
   setNewVehicle,
   handleSubmit,
   setOpen,
-  isLoading
+  isLoading,
 }) => {
   return (
     <div className="absolute top-0 right-0 h-full w-[380px] bg-gradient-to-b from-gray-50 to-white shadow-2xl shadow-gray-900/20 z-[1200] flex flex-col border-l border-gray-200">
@@ -108,7 +112,7 @@ const AddVehicleForm = ({
                   Adding Vehicle...
                 </>
               ) : (
-                'Save Vehicle'
+                "Save Vehicle"
               )}
             </button>
           </div>

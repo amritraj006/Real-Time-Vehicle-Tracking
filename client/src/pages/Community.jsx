@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { submitContactForm } from "../api/contactApi";
 
 const Community = () => {
   const [loading, setLoading] = useState(false);
@@ -16,20 +17,16 @@ const Community = () => {
     );
 
     try {
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        body: formData,
-      });
+      const data = await submitContactForm(formData);
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (data.success || data.ok) {
         alert("Success! Your message has been sent.");
         e.target.reset();
       } else {
-        alert("Error: " + data.message);
+        alert("Error: " + (data.message || "Unable to send message"));
       }
     } catch (error) {
+      console.error("Error submitting contact form:", error);
       alert("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -38,7 +35,6 @@ const Community = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 relative">
-      
       {/* Home Button */}
       <button
         onClick={() => navigate("/home")}
@@ -100,7 +96,7 @@ const Community = () => {
           />
         </div>
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
