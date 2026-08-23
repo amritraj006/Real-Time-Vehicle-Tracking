@@ -1,5 +1,6 @@
 import React from "react";
-import { X, Loader2 } from "lucide-react";
+import { X } from "lucide-react";
+import Loader from "../common/Loader";
 
 /**
  * Slide-over drawer form for registering a new vehicle to the user's fleet.
@@ -108,7 +109,7 @@ const AddVehicleForm = ({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="animate-spin" size={20} />
+                  <Loader mini />
                   Adding Vehicle...
                 </>
               ) : (
