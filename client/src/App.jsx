@@ -2,7 +2,6 @@ import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import Loader from "./components/common/Loader";
 import ProtectedRoute from "./components/common/ProtectedRoute";
-
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Home = lazy(() => import("./pages/Home"));
 const MapView = lazy(() => import("./pages/MapView"));
