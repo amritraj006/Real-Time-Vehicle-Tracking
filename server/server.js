@@ -14,6 +14,7 @@ import { disconnectRedis } from "./config/redis.js";
 import { startVehicleTracking } from "./services/vehicleTracker.service.js";
 
 const PORT = process.env.PORT || 5001;
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 // Attach Express app to the HTTP server
 const server = http.createServer(app);
@@ -26,7 +27,7 @@ startVehicleTracking();
 
 // Start listening for incoming requests
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running in [${NODE_ENV}] mode on port ${PORT}`);
 });
 
 // ─── Graceful Shutdown ────────────────────────────
@@ -42,3 +43,13 @@ const shutdown = async (signal) => {
 
 process.on("SIGINT",  () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+// ─── Process Error Handlers ───────────────────────
+process.on("unhandledRejection", (reason) => {
+  console.error("❌ Unhandled Promise Rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", error);
+  shutdown("uncaughtException");
+});
