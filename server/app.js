@@ -15,9 +15,9 @@ import connectDB from "./config/db.js";
 import { connectRedis } from "./config/redis.js";
 import { inngest, functions } from "./inngest/index.js";
 
-import vehicleRoutes   from "./routes/vehicleRoutes.js";
+import vehicleRoutes from "./routes/vehicleRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
-import userRoutes      from "./routes/userRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 // Load environment variables from .env
 dotenv.config();
@@ -31,7 +31,7 @@ const app = express();
 // ─── Middleware ───────────────────────────────────
 app.use(express.json()); // Parse JSON request bodies
 app.use(cors({
-  origin:  "*",
+  origin: "*",
   methods: "GET,POST,PUT,DELETE",
 }));
 
@@ -39,9 +39,9 @@ app.use(cors({
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // ─── REST API Routes ──────────────────────────────
-app.use("/api/vehicles",  vehicleRoutes);
+app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/users",     userRoutes);
+app.use("/api/users", userRoutes);
 
 // ─── Health Check ─────────────────────────────────
 app.get("/", (req, res) => {
