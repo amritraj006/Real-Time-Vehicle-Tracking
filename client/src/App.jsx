@@ -22,9 +22,7 @@ const App = () => {
           </ProtectedRoute>
         } />
         <Route path="/track/:vehicleId" element={
-          <ProtectedRoute>
             <Lander />
-          </ProtectedRoute>
         } />
         <Route path="/about" element={<About />} />
         <Route path="/community" element={<Community />} />
