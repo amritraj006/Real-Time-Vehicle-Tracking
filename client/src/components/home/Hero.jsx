@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserButton, useUser, SignInButton, useClerk } from "@clerk/clerk-react";
-import { useAppContext } from "../../contexts/AppContext";
+import { useAppContext } from "../../hooks/useAppContext";
+import { LayoutDashboard } from "lucide-react";
 
 const Hero = () => {
   const { isSignedIn, user } = useUser();
@@ -10,6 +11,7 @@ const Hero = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openVideoModal, setOpenVideoModal] = useState(false);
   const { totalUsers, users } = useAppContext();
+  const [isHovered, setIsHovered] = useState(false);
 
   const companiesLogo = [
     {
@@ -97,9 +99,10 @@ const Hero = () => {
           </Link>
 
           <div className="hidden md:flex items-center gap-8 transition duration-500 text-slate-800">
-            <a href="#" className="hover:text-green-600 transition">
+            <Link to="/home" className="hover:text-green-600 transition font-medium">
               Home
-            </a>
+            </Link>
+          
             <a href="#features" className="hover:text-green-600 transition">
               Features
             </a>
@@ -113,7 +116,8 @@ const Hero = () => {
 
           <div className="flex gap-2">
             {isSignedIn ? (
-              <div className="hidden md:block">
+              <div className="hidden md:flex items-center gap-3">
+             
                 <UserButton afterSignOutUrl="/home" />
               </div>
             ) : (
@@ -149,16 +153,17 @@ const Hero = () => {
             menuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <a href="#" className="text-white">
+          <Link to="/home" className="text-white" onClick={() => setMenuOpen(false)}>
             Home
-          </a>
-          <a href="#features" className="text-white">
+          </Link>
+     
+          <a href="#features" className="text-white" onClick={() => setMenuOpen(false)}>
             Features
           </a>
-          <a href="#testimonial" className="text-white">
+          <a href="#testimonial" className="text-white" onClick={() => setMenuOpen(false)}>
             Testimonials
           </a>
-          <a href="#cta" className="text-white">
+          <a href="#cta" className="text-white" onClick={() => setMenuOpen(false)}>
             Contact
           </a>
 
@@ -247,8 +252,10 @@ const Hero = () => {
           {/* CTA Buttons */}
           <div className="flex items-center gap-4">
             <button
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
               onClick={handleGetStarted}
-              className="bg-green-500 hover:bg-green-600 text-white rounded-full px-9 h-12 m-1 ring-offset-2 ring-1 ring-green-400 flex items-center transition-colors"
+              className="bg-green-500 cursor-pointer hover:bg-green-600 text-white rounded-full px-9 h-12 m-1 ring-offset-2 ring-1 ring-green-400 flex items-center transition-colors"
             >
               Get started
               <svg
@@ -261,7 +268,7 @@ const Hero = () => {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="lucide lucide-arrow-right ml-1 size-4"
+                className={isHovered ? "lucide lucide-arrow-right ml-1 size-4 translate-x-1 transition" : "lucide lucide-arrow-right ml-1 size-4 hover:translate-x-1 transition"}
                 aria-hidden="true"
               >
                 <path d="M5 12h14"></path>
@@ -269,28 +276,16 @@ const Hero = () => {
               </svg>
             </button>
 
+          {isSignedIn && (
+            
             <button
-              onClick={() => setOpenVideoModal(true)}
-              className="flex items-center gap-2 border border-slate-400 hover:bg-green-50 transition rounded-full px-7 h-12 text-slate-700"
+            onClick={() => navigate("/user-dashboard")}
+              className="flex  cursor-pointer items-center gap-2 border border-slate-400 hover:bg-green-50 transition rounded-full px-7 h-12 text-slate-700"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-video size-5"
-                aria-hidden="true"
-              >
-                <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path>
-                <rect x="2" y="6" width="14" height="12" rx="2"></rect>
-              </svg>
-              <span>Try demo</span>
+              <LayoutDashboard size={16} />
+              <span>Dashboard</span>
             </button>
+          )}
           </div>
 
           <p className="py-6 text-slate-600 mt-14">

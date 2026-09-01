@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useUser, useClerk } from "@clerk/clerk-react";
 
 const CallToAction = () => {
@@ -16,6 +17,8 @@ const CallToAction = () => {
     }
   };
 
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <div
       id="cta"
@@ -23,13 +26,15 @@ const CallToAction = () => {
     >
       <div className="flex flex-col md:flex-row text-center md:text-left items-center justify-between gap-8 px-3 md:px-10 border-x border-dashed border-slate-200 py-16 sm:py-20 -mt-10 -mb-10 w-full">
         <p className="text-xl font-medium max-w-md text-slate-800">
-          Track your vehicles in real-time with precision and ease.  
+          Track your vehicles in real-time with precision and ease.
           Enhance your fleet management and ensure safety on the road.
         </p>
 
         <button
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           onClick={handleStartTracking}
-          className="flex items-center gap-2 rounded py-3 px-8 bg-green-600 hover:bg-green-700 transition text-white active:scale-95"
+          className="flex cursor-pointer items-center gap-2 rounded py-3 px-8 bg-green-600 hover:bg-green-700 transition text-white active:scale-95"
         >
           <span>Start Tracking Now</span>
           <svg
@@ -42,7 +47,7 @@ const CallToAction = () => {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="size-4.5"
+            className={isHovered ? "size-4.5 translate-x-1 transition" : "size-4.5 hover:translate-x-1 transition"}
           >
             <path d="M5 12h14" />
             <path d="m12 5 7 7-7 7" />

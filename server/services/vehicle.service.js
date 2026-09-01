@@ -85,14 +85,19 @@ export const getVehicleById = async (vehicleId) => {
 
 // ─── Add Vehicle ──────────────────────────────────
 export const addVehicle = async ({ vehicleId, name, type, lat, lng, userId }) => {
-  // Check for duplicate
+  // Check for duplicate vehicleId
   const existing = await Vehicle.findOne({ vehicleId });
   if (existing) return { error: "Vehicle already exists" };
 
   // Save to MongoDB
   const vehicle = await Vehicle.create({
-    vehicleId, name, type, lat, lng, userId,
-    route: [{ lat, lng }], // Start route from initial position
+    vehicleId,
+    name,
+    type,
+    lat,
+    lng,
+    userId,
+    route: [{ lat, lng, timestamp: new Date() }], // Start route from initial position
   });
 
   // Add vehicle name to user's vehicles array
@@ -111,6 +116,33 @@ export const addVehicle = async ({ vehicleId, name, type, lat, lng, userId }) =>
   );
 
   return { vehicle };
+};
+
+// ─── Update Vehicle Real-Time Location ────────────
+export const updateVehicleLocation = async ({ vehicleId, lat, lng, speed, heading, userId }) => {
+  const MAX_ROUTE = 100;
+  const vehicle = await Vehicle.findOne({ vehicleId });
+  if (!vehicle) return null;
+
+  vehicle.lat = Number(lat);
+  vehicle.lng = Number(lng);
+  vehicle.route = vehicle.route || [];
+  vehicle.route.push({ lat: Number(lat), lng: Number(lng), timestamp: new Date() });
+  if (vehicle.route.length > MAX_ROUTE) {
+    vehicle.route = vehicle.route.slice(-MAX_ROUTE);
+  }
+  vehicle.updatedAt = new Date();
+
+  await vehicle.save();
+
+  // Invalidate and update cache
+  await deleteCache(
+    CACHE_KEYS.byId(vehicleId),
+    CACHE_KEYS.active,
+    CACHE_KEYS.byUser(vehicle.userId)
+  );
+
+  return vehicle;
 };
 
 // ─── Delete Vehicle ───────────────────────────────

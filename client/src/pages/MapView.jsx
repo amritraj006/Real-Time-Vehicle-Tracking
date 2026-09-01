@@ -1,31 +1,74 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Polyline, Circle } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  Polyline,
+  Circle,
+  useMap,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { Plus, Car, Bike, Truck, Bus, Users, Activity, Loader2, Navigation, Zap } from "lucide-react";
+import L from "leaflet";
+import {
+  Plus,
+  Car,
+  Bike,
+  Truck,
+  Bus,
+  Activity,
+  Loader2,
+  Navigation,
+  Zap,
+  Sliders,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  Compass,
+  Radio,
+  Share2,
+} from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useAppContext } from "../contexts/AppContext";
-import { getVehiclesByUser, addVehicle as apiAddVehicle, deleteVehicle as apiDeleteVehicle } from "../api/vehicleApi";
+import { useAppContext } from "../hooks/useAppContext";
+import {
+  getVehiclesByUser,
+  addVehicle as apiAddVehicle,
+  deleteVehicle as apiDeleteVehicle,
+} from "../api/vehicleApi";
 import { vehicleTypeData, getRouteColor } from "../constants/vehicleConfig";
-import { getVehicleDivIcon, previewMarkerIcon } from "../utils/leafletSetup";
-import AddVehicleForm from "../components/map/AddVehicleForm";
-import VehiclePopup from "../components/map/VehiclePopup";
+import {
+  getVehicleDivIcon,
+  previewMarkerIcon,
+  userLocationIcon,
+  calculateBearing,
+} from "../utils/leafletSetup";
 
-// Stats icons mapping
-const statsIcons = {
-  car: <Car className="text-blue-500" size={20} />,
-  bike: <Bike className="text-red-500" size={20} />,
-  truck: <Truck className="text-amber-500" size={20} />,
-  bus: <Bus className="text-green-500" size={20} />,
+import AddVehicleForm from "../components/map/AddVehicleForm";
+import TelemetryHUD from "../components/map/TelemetryHUD";
+import FleetSidebar from "../components/map/FleetSidebar";
+import MapControls, { MAP_LAYERS } from "../components/map/MapControls";
+
+/**
+ * Helper hook to capture map instance
+ */
+const MapInstanceCapture = ({ setMapInstance }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (map) {
+      setMapInstance(map);
+    }
+  }, [map, setMapInstance]);
+  return null;
 };
 
 const MapView = () => {
   const [vehicles, setVehicles] = useState([]);
   const { socket } = useAppContext();
-  const [open, setOpen] = useState(false);
+  const [openAddModal, setOpenAddModal] = useState(false);
   const [newVehicle, setNewVehicle] = useState({
     name: "",
     type: "car",
@@ -37,47 +80,88 @@ const MapView = () => {
     removing: false,
     removingId: null,
   });
-  const [activeVehicle, setActiveVehicle] = useState(null);
+
+  // Active focused vehicle ID
+  const [activeVehicleId, setActiveVehicleId] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  // Map Controls State
+  const [currentLayer, setCurrentLayer] = useState(MAP_LAYERS[0]); // Default Clean Streets
+  const [userLocation, setUserLocation] = useState(null);
+
+  // Sidebar and UI visibility
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isLegendOpen, setIsLegendOpen] = useState(true);
+
   const { user } = useUser();
-  const mapRef = useRef();
+  const mapInstanceRef = useRef(null);
   const navigate = useNavigate();
 
-  // Calculate vehicle telemetry stats
-  const vehicleStats = useMemo(() => ({
-    total: vehicles.length,
-    byType: vehicles.reduce((acc, vehicle) => {
-      acc[vehicle.type] = (acc[vehicle.type] || 0) + 1;
-      return acc;
-    }, {}),
-    active: vehicles.length,
-  }), [vehicles]);
+  // Active vehicle object
+  const activeVehicle = useMemo(() => {
+    return vehicles.find((v) => v.vehicleId === activeVehicleId) || vehicles[0] || null;
+  }, [vehicles, activeVehicleId]);
 
-  // Socket location update handler for real-time fleet movement
-  const handleLocationUpdate = useCallback((data) => {
-    if (data.userId !== user?.id) return;
+  // Set map instance reference
+  const handleSetMapInstance = useCallback((map) => {
+    mapInstanceRef.current = map;
+  }, []);
 
-    setVehicles((prev) =>
-      prev.map((v) =>
-        v.vehicleId === data.vehicleId
-          ? {
+  // Update vehicle telemetry on socket event
+  const handleLocationUpdate = useCallback(
+    (data) => {
+      if (data.userId !== user?.id && data.userId !== "all") return;
+
+      setVehicles((prev) =>
+        prev.map((v) => {
+          if (v.vehicleId === data.vehicleId) {
+            const newBearing = calculateBearing(v.lat, v.lng, data.lat, data.lng);
+            const updatedRoute = data.route || (v.route ? [...v.route, { lat: data.lat, lng: data.lng }].slice(-50) : [{ lat: data.lat, lng: data.lng }]);
+            return {
               ...v,
               lat: data.lat,
               lng: data.lng,
-              route: data.route || v.route,
-            }
-          : v
-      )
-    );
-  }, [user?.id]);
+              heading: newBearing || data.heading || v.heading || 0,
+              speed: data.speed !== undefined ? data.speed : v.speed || 0,
+              battery: data.battery !== undefined ? data.battery : (v.battery || 95),
+              route: updatedRoute,
+            };
+          }
+          return v;
+        })
+      );
+    },
+    [user?.id]
+  );
 
-  // Load user's vehicles on mount or when user changes
+  // Auto camera follow if follow mode is active
+  useEffect(() => {
+    if (isFollowing && activeVehicle && mapInstanceRef.current) {
+      mapInstanceRef.current.panTo([activeVehicle.lat, activeVehicle.lng], {
+        animate: true,
+        duration: 1,
+      });
+    }
+  }, [isFollowing, activeVehicle?.lat, activeVehicle?.lng]);
+
+  // Load user's vehicles on mount
   useEffect(() => {
     if (!user) return;
 
     const fetchVehicles = async () => {
       try {
         const data = await getVehiclesByUser(user.id);
-        setVehicles(data);
+        const enriched = data.map((v) => ({
+          ...v,
+          speed: v.speed !== undefined ? v.speed : 0,
+          heading: v.heading !== undefined ? v.heading : 0,
+          battery: v.battery !== undefined ? v.battery : 98,
+          route: v.route && v.route.length > 0 ? v.route : [{ lat: v.lat, lng: v.lng }],
+        }));
+        setVehicles(enriched);
+        if (enriched.length > 0 && !activeVehicleId) {
+          setActiveVehicleId(enriched[0].vehicleId);
+        }
       } catch (err) {
         console.error("Error fetching vehicles:", err);
         toast.error("Failed to load vehicles");
@@ -86,24 +170,28 @@ const MapView = () => {
 
     fetchVehicles();
 
-    socket.on("locationUpdate", handleLocationUpdate);
+    if (socket) {
+      socket.on("locationUpdate", handleLocationUpdate);
+    }
 
     return () => {
-      socket.off("locationUpdate", handleLocationUpdate);
+      if (socket) {
+        socket.off("locationUpdate", handleLocationUpdate);
+      }
     };
   }, [user, socket, handleLocationUpdate]);
 
-  // Map click handler to select latitude/longitude for a new vehicle
+  // Click on map to select coordinates for new vehicle
   const LocationSelector = () => {
     useMapEvents({
       click(e) {
-        if (open) {
+        if (openAddModal) {
           setNewVehicle((prev) => ({
             ...prev,
             lat: e.latlng.lat,
             lng: e.latlng.lng,
           }));
-          toast.info("📍 Location selected! Fill vehicle details and save.");
+          toast.info("📍 Coordinates locked! Enter vehicle name & deploy.");
         }
       },
     });
@@ -111,53 +199,127 @@ const MapView = () => {
   };
 
   // Add and register new vehicle
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    if (!newVehicle.name || !newVehicle.lat || !newVehicle.lng) {
-      toast.warning("Please fill all fields and select a location!");
-      return;
-    }
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-    setLoading((prev) => ({ ...prev, adding: true }));
+      if (!newVehicle.name || !newVehicle.lat || !newVehicle.lng) {
+        toast.warning("Please fill vehicle name and select a location!");
+        return;
+      }
 
-    try {
-      const createdVehicle = await apiAddVehicle({
-        ...newVehicle,
-        userId: user.id,
-        vehicleId: `VH-${Date.now()}`,
-      });
-      setVehicles((prev) => [...prev, createdVehicle]);
-      setOpen(false);
-      setNewVehicle({ name: "", type: "car", lat: null, lng: null });
-      toast.success("🚗 Vehicle added successfully!");
-    } catch (err) {
-      console.error("Error adding vehicle:", err);
-      toast.error("Failed to add vehicle");
-    } finally {
-      setLoading((prev) => ({ ...prev, adding: false }));
-    }
-  }, [newVehicle, user?.id]);
+      setLoading((prev) => ({ ...prev, adding: true }));
+
+      try {
+        const createdVehicle = await apiAddVehicle({
+          ...newVehicle,
+          userId: user.id,
+          vehicleId: `VH-${Date.now()}`,
+        });
+
+        const enrichedCreated = {
+          ...createdVehicle,
+          speed: 0,
+          heading: 0,
+          battery: 98,
+          route: [{ lat: newVehicle.lat, lng: newVehicle.lng }],
+        };
+
+        setVehicles((prev) => [...prev, enrichedCreated]);
+        setOpenAddModal(false);
+        setActiveVehicleId(enrichedCreated.vehicleId);
+
+        // Fly map to new vehicle
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([newVehicle.lat, newVehicle.lng], 15, {
+            duration: 1.5,
+          });
+        }
+
+        setNewVehicle({ name: "", type: "car", lat: null, lng: null });
+        toast.success(`🚀 ${enrichedCreated.name} deployed to real-time grid!`);
+      } catch (err) {
+        console.error("Error adding vehicle:", err);
+        toast.error(err.response?.data?.message || "Failed to add vehicle");
+      } finally {
+        setLoading((prev) => ({ ...prev, adding: false }));
+      }
+    },
+    [newVehicle, user?.id]
+  );
 
   // Remove / Stop vehicle
-  const handleStop = useCallback(async (vehicleId) => {
-    if (!window.confirm("Are you sure you want to remove this vehicle?")) return;
+  const handleStop = useCallback(
+    async (vehicleId) => {
+      if (!window.confirm("Are you sure you want to stop and remove this vehicle?")) return;
 
-    setLoading((prev) => ({ ...prev, removing: true, removingId: vehicleId }));
+      setLoading((prev) => ({ ...prev, removing: true, removingId: vehicleId }));
 
-    try {
-      await apiDeleteVehicle(user.id, vehicleId);
-      setVehicles((prev) => prev.filter((v) => v.vehicleId !== vehicleId));
-      toast.success("🗑️ Vehicle removed successfully!");
-    } catch (err) {
-      console.error("Error removing vehicle:", err);
-      toast.error("Error removing vehicle");
-    } finally {
-      setLoading((prev) => ({ ...prev, removing: false, removingId: null }));
+      try {
+        await apiDeleteVehicle(user.id, vehicleId);
+        setVehicles((prev) => prev.filter((v) => v.vehicleId !== vehicleId));
+        if (activeVehicleId === vehicleId) {
+          setActiveVehicleId(null);
+          setIsFollowing(false);
+        }
+        toast.success("🗑️ Unit successfully decommissioned!");
+      } catch (err) {
+        console.error("Error removing vehicle:", err);
+        toast.error("Error removing vehicle");
+      } finally {
+        setLoading((prev) => ({ ...prev, removing: false, removingId: null }));
+      }
+    },
+    [user?.id, activeVehicleId]
+  );
+
+  // Fly to and select vehicle
+  const handleSelectVehicle = useCallback((vehicle) => {
+    setActiveVehicleId(vehicle.vehicleId);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([vehicle.lat, vehicle.lng], 16, {
+        duration: 1.2,
+      });
     }
-  }, [user?.id]);
+  }, []);
+
+  // Fit bounds to all vehicles in fleet
+  const handleFitBounds = useCallback(() => {
+    if (!mapInstanceRef.current || vehicles.length === 0) return;
+    const latLngs = vehicles.map((v) => [v.lat, v.lng]);
+    const bounds = L.latLngBounds(latLngs);
+    mapInstanceRef.current.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+    toast.info("🗺️ Camera centered on all fleet units");
+  }, [vehicles]);
+
+  // Geolocation trigger
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported");
+      return;
+    }
+    toast.info("📡 Acquiring GPS position...");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(coords);
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([coords.lat, coords.lng], 15, {
+            duration: 1.5,
+          });
+        }
+        toast.success("📍 Your location acquired!");
+      },
+      (err) => {
+        console.error(err);
+        toast.error("Could not retrieve GPS location");
+      },
+      { enableHighAccuracy: true }
+    );
+  }, []);
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="relative w-full h-screen overflow-hidden bg-gray-950 font-sans select-none">
       {/* Toast Notifications */}
       <ToastContainer
         position="top-right"
@@ -170,467 +332,541 @@ const MapView = () => {
         draggable
         pauseOnHover
         theme="light"
-        className="mt-16"
+        className="mt-16 z-[2000]"
       />
 
-      {/* Modern Header */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] bg-gradient-to-r from-white/95 to-white/90 backdrop-blur-xl border-b border-gray-200/50 px-6 py-4 shadow-lg">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link to="/home" className="group">
-              <div className="relative">
-                <img
-                  src="/favicon.svg"
-                  alt="Logo"
-                  className="h-14 w-14 transition-transform group-hover:scale-105"
-                />
-                <div className="absolute -inset-2 bg-blue-500/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              </div>
-            </Link>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                Fleet Dashboard
-              </h1>
-              <p className="text-sm text-gray-600">Real-time vehicle tracking</p>
+      {/* Top Navigation Header */}
+      <header className="absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-6 py-3.5 shadow-xs flex items-center justify-between">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link to="/home" className="group flex items-center gap-3">
+            <div className="relative">
+              <img
+                src="/favicon.svg"
+                alt="Logo"
+                className="h-10 w-10 sm:h-11 sm:w-11 transition-transform group-hover:scale-105"
+              />
             </div>
-          </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-lg font-bold text-slate-800 leading-none">
+                  Fleet Tracker
+                </h1>
+                <span className="flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
+                  LIVE
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 hidden sm:block">
+                Real-Time Telematics & Geospatial Tracking
+              </p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Header Right Actions */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            onClick={() => navigate("/user-dashboard")}
+            className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+          >
+            <Activity size={14} className="text-green-600" /> Dashboard
+          </button>
 
           <button
-            className="flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-5 py-3 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
-            onClick={() => setOpen(true)}
+            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 text-white rounded-xl font-semibold text-xs sm:text-sm transition-all duration-300 shadow-sm cursor-pointer disabled:opacity-70 bg-green-600 hover:bg-green-700 active:scale-95"
+            onClick={() => setOpenAddModal(true)}
             disabled={loading.adding}
           >
             {loading.adding ? (
-              <Loader2 className="animate-spin" size={18} />
+              <Loader2 className="animate-spin" size={16} />
             ) : (
-              <Plus size={18} />
+              <Plus size={16} />
             )}
-            {loading.adding ? "Adding..." : "Add Vehicle"}
+            <span>Add Vehicle</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Enhanced Stats Bar */}
-      <div className="absolute top-22 left-14 z-[1000] bg-white/90 backdrop-blur-xl rounded-md shadow-2xl border border-gray-200/30 p-5 w-72">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="p-2 bg-green-600 rounded-lg">
-            <Activity className="text-white" size={20} />
-          </div>
-          <div>
-            <h2 className="font-bold text-gray-800">Vehicle Statistics</h2>
-            <p className="text-xs text-gray-500">Live tracking overview</p>
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <div
-            onClick={() => navigate("/user-dashboard")}
-            className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 cursor-pointer"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="text-blue-600" size={18} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total Vehicles</p>
-                  <p className="text-2xl font-bold text-gray-900">{vehicleStats.total}</p>
-                </div>
-              </div>
-              <Zap className="text-green-500" size={20} />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {Object.entries(vehicleStats.byType).map(([type, count]) => {
-              const color = vehicleTypeData[type]?.color || "#3B82F6";
-              return (
-                <div
-                  key={type}
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="p-2 rounded-lg"
-                      style={{ backgroundColor: `${color}15` }}
-                    >
-                      {statsIcons[type]}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800 capitalize">{type}</p>
-                      <p className="text-xs text-gray-500">{count} active</p>
-                    </div>
-                  </div>
-                  <div
-                    className="px-3 py-1 rounded-full text-sm font-semibold"
-                    style={{
-                      backgroundColor: `${color}15`,
-                      color: color,
-                    }}
-                  >
-                    {count}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="pt-4 border-t border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <div className="absolute -inset-1 bg-green-500 rounded-full animate-ping opacity-30"></div>
-              </div>
-              <span className="text-sm font-medium text-gray-700">All systems operational</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Map Container */}
-      <div className="pt-20 w-full h-full">
+      {/* Main Map Container */}
+      <div className="w-full h-full">
         <MapContainer
           center={[28.6139, 77.209]}
           zoom={12}
-          className="w-full h-full rounded-2xl"
-          zoomControl={true}
-          style={{
-            background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
-          }}
-          ref={mapRef}
+          className="w-full h-full z-0"
+          zoomControl={false}
         >
+          <MapInstanceCapture setMapInstance={handleSetMapInstance} />
+          
+          {/* Dynamic Switchable Tile Layer */}
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            key={currentLayer.id}
+            attribution={currentLayer.attribution}
+            url={currentLayer.url}
           />
+
           <LocationSelector />
 
-          {vehicles.map((v) => (
-            <React.Fragment key={v.vehicleId}>
-              {/* Vehicle Marker */}
-              <Marker
-                position={[v.lat, v.lng]}
-                icon={getVehicleDivIcon(v)}
-                eventHandlers={{
-                  click: () => setActiveVehicle(v.vehicleId),
-                }}
-              >
+          {/* User GPS Geolocation Marker */}
+          {userLocation && (
+            <>
+              <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon}>
                 <Popup>
-                  <VehiclePopup
-                    vehicle={v}
-                    handleStop={handleStop}
-                    isLoading={loading.removing && loading.removingId === v.vehicleId}
-                  />
+                  <div className="p-2 text-xs font-semibold text-gray-800">
+                    📍 You are here (GPS Live)
+                  </div>
                 </Popup>
               </Marker>
+              <Circle
+                center={[userLocation.lat, userLocation.lng]}
+                radius={300}
+                pathOptions={{
+                  color: "#3B82F6",
+                  fillColor: "#3B82F6",
+                  fillOpacity: 0.12,
+                  weight: 1.5,
+                  dashArray: "4, 6",
+                }}
+              />
+            </>
+          )}
 
-              {/* Enhanced Vehicle Route */}
-              {v.route && v.route.length > 1 && (
-                <>
-                  {/* Glow effect */}
-                  <Polyline
-                    positions={v.route.map((p) => [p.lat, p.lng])}
-                    pathOptions={{
-                      color: "white",
-                      weight: 12,
-                      opacity: 0.4,
-                      lineCap: "round",
-                      lineJoin: "round",
-                      className: "route-glow",
-                    }}
-                  />
+          {/* Vehicle Markers & Polyline Routes */}
+          {vehicles.map((v) => {
+            const isSelected = activeVehicleId === v.vehicleId;
+            const routeColor = getRouteColor(v.type);
 
-                  {/* Shadow effect */}
-                  <Polyline
-                    positions={v.route.map((p) => [p.lat, p.lng])}
-                    pathOptions={{
-                      color: "rgba(0, 0, 0, 0.2)",
-                      weight: 8,
-                      opacity: 0.3,
-                      lineCap: "round",
-                      lineJoin: "round",
-                      dashArray: activeVehicle === v.vehicleId ? "none" : "15, 20",
-                    }}
-                  />
+            return (
+              <React.Fragment key={v.vehicleId}>
+                {/* Vehicle Marker — click to select & open the unified panel below */}
+                <Marker
+                  position={[v.lat, v.lng]}
+                  icon={getVehicleDivIcon(v, isSelected)}
+                  eventHandlers={{
+                    click: () => setActiveVehicleId(v.vehicleId),
+                  }}
+                />
 
-                  {/* Animated pulse line */}
-                  {activeVehicle === v.vehicleId && (
+                {/* Enhanced Realistic Route History Polylines */}
+                {v.route && v.route.length > 1 && (
+                  <>
+                    {/* Glowing outer neon halo */}
                     <Polyline
                       positions={v.route.map((p) => [p.lat, p.lng])}
                       pathOptions={{
-                        color: "white",
-                        weight: 3,
-                        opacity: 0.8,
+                        color: routeColor,
+                        weight: isSelected ? 12 : 8,
+                        opacity: isSelected ? 0.35 : 0.15,
                         lineCap: "round",
-                        dashArray: "5, 20",
-                        className: "pulse-line",
+                        lineJoin: "round",
+                        className: "route-glow",
                       }}
                     />
-                  )}
 
-                  {/* Main route */}
-                  <Polyline
-                    positions={v.route.map((p) => [p.lat, p.lng])}
-                    pathOptions={{
-                      color: getRouteColor(v.type),
-                      weight: 6,
-                      opacity: activeVehicle === v.vehicleId ? 1 : 0.8,
-                      lineCap: "round",
-                      lineJoin: "round",
-                      className: "main-route",
-                    }}
-                  />
+                    {/* Animated dashed pulse trail */}
+                    {isSelected && (
+                      <Polyline
+                        positions={v.route.map((p) => [p.lat, p.lng])}
+                        pathOptions={{
+                          color: "#ffffff",
+                          weight: 3,
+                          opacity: 0.9,
+                          lineCap: "round",
+                          dashArray: "8, 16",
+                          className: "pulse-line",
+                        }}
+                      />
+                    )}
 
-                  {/* Vehicle position indicator */}
+                    {/* Main solid path line */}
+                    <Polyline
+                      positions={v.route.map((p) => [p.lat, p.lng])}
+                      pathOptions={{
+                        color: routeColor,
+                        weight: isSelected ? 5 : 3.5,
+                        opacity: isSelected ? 1 : 0.8,
+                        lineCap: "round",
+                        lineJoin: "round",
+                        className: "main-route",
+                      }}
+                    />
+
+
+                  </>
+                )}
+
+                {/* Selected vehicle pulsing radar ring */}
+                {isSelected && (
                   <Circle
                     center={[v.lat, v.lng]}
-                    radius={15}
+                    radius={100}
                     pathOptions={{
-                      fillColor: getRouteColor(v.type),
-                      color: "white",
-                      weight: 3,
-                      opacity: 1,
-                      fillOpacity: 0.8,
-                      className: "vehicle-position-indicator",
+                      color: routeColor,
+                      fillColor: routeColor,
+                      fillOpacity: 0.1,
+                      weight: 1.5,
+                      dashArray: "3, 6",
+                      className: "radar-scan-ring",
                     }}
                   />
-                </>
-              )}
-            </React.Fragment>
-          ))}
+                )}
+              </React.Fragment>
+            );
+          })}
 
-          {open && newVehicle.lat && newVehicle.lng && (
-            <Marker position={[newVehicle.lat, newVehicle.lng]} icon={previewMarkerIcon} />
+          {/* New Vehicle Placement Crosshair Pin */}
+          {openAddModal && newVehicle.lat && newVehicle.lng && (
+            <Marker
+              position={[newVehicle.lat, newVehicle.lng]}
+              icon={previewMarkerIcon}
+            />
           )}
         </MapContainer>
       </div>
 
-      {/* Add Vehicle Form Drawer */}
-      {open && (
+      {/* Responsive Left Fleet Control Sidebar */}
+      <FleetSidebar
+        vehicles={vehicles}
+        activeVehicleId={activeVehicleId}
+        onSelectVehicle={handleSelectVehicle}
+        onOpenAddModal={() => setOpenAddModal(true)}
+        isOpen={isSidebarOpen}
+        onToggleOpen={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
+
+      {/* Floating Map Controls Widget */}
+      <MapControls
+        onFitBounds={handleFitBounds}
+        onLocateMe={handleLocateMe}
+        vehicleCount={vehicles.length}
+      />
+
+      {/* Unified Vehicle Details + Telemetry Panel */}
+      {activeVehicle && (
+        <TelemetryHUD
+          vehicle={activeVehicle}
+          onClose={() => {
+            setActiveVehicleId(null);
+            setIsFollowing(false);
+          }}
+          isFollowing={isFollowing}
+          onToggleFollow={() => {
+            setIsFollowing((prev) => !prev);
+            toast.info(
+              !isFollowing
+                ? `🎯 Camera locked on ${activeVehicle.name}`
+                : "Camera lock released"
+            );
+          }}
+          onCenterVehicle={() => {
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.flyTo([activeVehicle.lat, activeVehicle.lng], 16, {
+                duration: 1.2,
+              });
+            }
+          }}
+          handleStop={handleStop}
+          isRemoving={loading.removing && loading.removingId === activeVehicle.vehicleId}
+        />
+      )}
+
+      {/* Add Vehicle Slide-over Form Drawer */}
+      {openAddModal && (
         <AddVehicleForm
           newVehicle={newVehicle}
           setNewVehicle={setNewVehicle}
-          setOpen={setOpen}
+          setOpen={setOpenAddModal}
           handleSubmit={handleSubmit}
           isLoading={loading.adding}
         />
       )}
 
-      {/* Enhanced Legend */}
-      <div className="absolute bottom-6 right-6 z-[1000] bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/30 p-5 w-64">
-        <div className="flex items-center gap-2 mb-4">
-          <Navigation className="text-blue-600" size={18} />
-          <h3 className="font-bold text-gray-800">Vehicle Legend</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {Object.entries(vehicleTypeData).map(([type, data]) => (
-            <div
-              key={type}
-              className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <div className="relative">
-                <div
-                  className="w-4 h-4 rounded-full shadow-md"
-                  style={{ background: data.gradient }}
-                ></div>
-                <div
-                  className="absolute -inset-1 rounded-full animate-pulse opacity-30"
-                  style={{ background: data.color }}
-                ></div>
-              </div>
-              <span className="text-sm font-medium text-gray-700 capitalize">{type}</span>
-            </div>
-          ))}
-        </div>
-        {open && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
+      {/* Bottom Right Expandable Legend */}
+      <div className="absolute bottom-4 right-4 z-[900] hidden sm:block">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200 p-3.5 w-60">
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => setIsLegendOpen(!isLegendOpen)}
+          >
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <div className="absolute -inset-1 bg-purple-500 rounded-full animate-ping opacity-30"></div>
-              </div>
-              <span className="text-sm text-purple-600 font-medium">
-                Click map to set location
-              </span>
+              <Navigation className="text-green-600" size={15} />
+              <h3 className="font-bold text-xs text-slate-800 uppercase tracking-wider">
+                Fleet Key
+              </h3>
             </div>
+            <button className="text-slate-400 hover:text-slate-600">
+              {isLegendOpen ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+            </button>
           </div>
-        )}
+
+          {isLegendOpen && (
+            <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-slate-100">
+              {Object.entries(vehicleTypeData).map(([type, data]) => (
+                <div
+                  key={type}
+                  className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <div
+                    className="w-3 h-3 rounded-full shadow-xs shrink-0"
+                    style={{ background: data.gradient }}
+                  />
+                  <span className="text-xs font-semibold text-slate-700 capitalize">
+                    {type}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Map and Marker Styles */}
+      {/* Custom Styles for Leaflet & Marker Animations */}
       <style>{`
-        @keyframes pulse-ring {
-          0% { transform: scale(0.8); opacity: 0.5; }
-          100% { transform: scale(2); opacity: 0; }
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-5px); }
-        }
-
-        .vehicle-marker-container {
+        /* Custom vehicle marker wrapper */
+        .vehicle-marker-wrapper {
           position: relative;
+          width: 80px;
+          height: 80px;
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
+          cursor: pointer;
         }
 
-        .vehicle-pulse {
+        /* Pulse Ring */
+        .vehicle-pulse-ring {
           position: absolute;
-          width: 60px;
-          height: 60px;
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
-          opacity: 0.3;
-          animation: pulse-ring 2s infinite;
-          z-index: 1;
+          border: 2px solid;
+          opacity: 0;
+          pointer-events: none;
         }
 
-        .vehicle-icon {
+        .vehicle-marker-wrapper.is-moving .vehicle-pulse-ring,
+        .vehicle-marker-wrapper.is-selected .vehicle-pulse-ring {
+          animation: radar-wave 2.2s infinite ease-out;
+        }
+
+        @keyframes radar-wave {
+          0% { transform: scale(0.7); opacity: 0.9; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        /* Heading Direction Arrow */
+        .vehicle-heading-arrow {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          transition: transform 0.4s ease-out;
+        }
+
+        .arrow-tip {
+          position: absolute;
+          top: 8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-bottom: 9px solid;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+        }
+
+        /* Vehicle Bubble */
+        .vehicle-bubble {
           position: relative;
           z-index: 2;
-          width: 50px;
-          height: 50px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 3px solid white;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-          transition: all 0.3s ease;
-          animation: float 3s ease-in-out infinite;
+          border: 2.5px solid #ffffff;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .vehicle-icon:hover {
-          transform: scale(1.1);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        .vehicle-marker-wrapper:hover .vehicle-bubble,
+        .vehicle-marker-wrapper.is-selected .vehicle-bubble {
+          transform: scale(1.18);
+          border-color: #f8fafc;
         }
 
-        .vehicle-label {
-          position: relative;
-          z-index: 2;
-          background: rgba(255, 255, 255, 0.95);
-          color: #1f2937;
-          padding: 4px 10px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: 600;
-          margin-top: 5px;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          max-width: 80px;
+        .vehicle-status-dot {
+          position: absolute;
+          top: -2px;
+          right: -2px;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          border: 2px solid #ffffff;
+        }
+
+        /* Label Chip */
+        .vehicle-label-chip {
+          position: absolute;
+          bottom: 2px;
+          z-index: 3;
+          background: rgba(15, 23, 42, 0.88);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          padding: 2px 7px;
+          border-radius: 9999px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          pointer-events: none;
+          max-width: 90px;
+          white-space: nowrap;
+        }
+
+        .vehicle-name-text {
+          font-size: 10px;
+          font-weight: 700;
+          color: #ffffff;
           overflow: hidden;
           text-overflow: ellipsis;
-          white-space: nowrap;
-          transition: all 0.3s ease;
         }
 
+        .vehicle-speed-tag {
+          font-size: 9px;
+          font-weight: 800;
+          font-family: monospace;
+          padding: 1px 4px;
+          border-radius: 4px;
+        }
+
+        /* Preview Marker for Add Flow */
         .preview-marker {
           position: relative;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
         }
 
         .preview-pulse {
           position: absolute;
-          width: 60px;
-          height: 60px;
-          background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+          width: 50px;
+          height: 50px;
           border-radius: 50%;
-          opacity: 0.3;
-          animation: pulse-ring 1.5s infinite;
+          background: rgba(139, 92, 246, 0.4);
+          animation: radar-wave 1.5s infinite ease-out;
         }
 
         .preview-icon {
           position: relative;
           z-index: 2;
-          width: 40px;
-          height: 40px;
-          background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
+          background: linear-gradient(135deg, #8b5cf6, #6366f1);
           display: flex;
           align-items: center;
           justify-content: center;
           border: 3px solid white;
-          box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+          box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
         }
 
-        .preview-icon::before {
-          content: "+";
+        .preview-badge {
+          position: relative;
+          z-index: 2;
+          margin-top: 4px;
+          background: #4f46e5;
           color: white;
-          font-size: 20px;
+          font-size: 10px;
           font-weight: bold;
+          padding: 2px 8px;
+          border-radius: 9999px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
+        /* User GPS Location Marker */
+        .user-gps-marker {
+          position: relative;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .user-gps-pulse {
+          position: absolute;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(59, 130, 246, 0.4);
+          animation: radar-wave 1.8s infinite ease-out;
+        }
+
+        .user-gps-dot {
+          position: relative;
+          z-index: 2;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #2563eb;
+          border: 3px solid #ffffff;
+          box-shadow: 0 2px 10px rgba(37, 99, 235, 0.6);
+        }
+
+        /* Polyline Animations */
+        @keyframes pulse-dash {
+          0% { stroke-dashoffset: 0; }
+          100% { stroke-dashoffset: 24; }
+        }
+
+        .pulse-line {
+          animation: pulse-dash 1.2s linear infinite;
+        }
+
+        .route-glow {
+          filter: blur(4px);
+        }
+
+        .radar-scan-ring {
+          animation: pulse-dash 3s linear infinite;
+        }
+
+        /* Leaflet resets */
         .leaflet-div-icon {
           background: transparent !important;
           border: none !important;
         }
 
-        .custom-vehicle-icon {
-          background: transparent !important;
-          border: none !important;
-        }
-
-        .route-glow {
-          filter: blur(6px) opacity(0.5);
-        }
-
-        @keyframes pulse-dash {
-          0% {
-            stroke-dashoffset: 0;
-          }
-          100% {
-            stroke-dashoffset: 25;
-          }
-        }
-
-        .pulse-line {
-          animation: pulse-dash 1.5s linear infinite;
-        }
-
-        .main-route:hover {
-          filter: brightness(1.2);
-          stroke-width: 7px !important;
-          transition: all 0.3s ease;
-        }
-
-        .vehicle-position-indicator {
-          animation: pulse-ring 2s infinite;
-          filter: drop-shadow(0 0 8px currentColor);
-        }
-
         .leaflet-popup-content-wrapper {
-          border-radius: 16px !important;
+          border-radius: 20px !important;
           padding: 0 !important;
           overflow: hidden !important;
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5) !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .leaflet-popup-content {
+          margin: 0 !important;
+          line-height: normal !important;
         }
 
         .leaflet-popup-tip {
-          backdrop-filter: blur(10px);
+          background: #0f172a !important;
         }
 
-        .leaflet-control-zoom {
-          border: none !important;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
-          border-radius: 12px !important;
-          overflow: hidden;
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
         }
-
-        .leaflet-control-zoom a {
-          border-radius: 0 !important;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(156, 163, 175, 0.4);
+          border-radius: 9999px;
         }
-
-        .leaflet-control-zoom a:hover {
-          background-color: #f3f4f6 !important;
-        }
-
-        .leaflet-control-zoom-in {
-          border-bottom: 1px solid #e5e7eb !important;
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </div>

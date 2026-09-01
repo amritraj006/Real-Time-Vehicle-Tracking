@@ -4,6 +4,10 @@ import "leaflet/dist/leaflet.css";
 import { Link, useParams } from "react-router-dom";
 import {
   Car,
+  Bike,
+  Truck,
+  Bus,
+  Footprints,
   Navigation,
   MapPin,
   Clock,
@@ -19,18 +23,17 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { useAppContext } from "../contexts/AppContext";
+import { useAppContext } from "../hooks/useAppContext";
 import { getVehicleById } from "../api/vehicleApi";
 import { vehicleTypeData } from "../constants/vehicleConfig";
 import { getEnhancedVehicleDivIcon } from "../utils/leafletSetup";
 import Loader from "../components/common/Loader";
 
-// Vehicle type icons for telemetry display
 const vehicleTypeIcons = {
   car: <Car className="text-blue-500" size={20} />,
-  bike: <Car className="text-red-500" size={20} />,
-  truck: <Car className="text-amber-500" size={20} />,
-  bus: <Car className="text-green-500" size={20} />,
+  bike: <Bike className="text-red-500" size={20} />,
+  truck: <Truck className="text-amber-500" size={20} />,
+  bus: <Bus className="text-green-500" size={20} />,
 };
 
 const Lander = () => {
@@ -224,7 +227,7 @@ const Lander = () => {
 
   return (
     <div
-      className={`relative w-full h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-blue-50 ${
+      className={`relative w-full h-screen bg-[#fafafa] font-sans ${
         isFullscreen ? "pt-0" : "pt-20"
       }`}
     >
@@ -240,182 +243,165 @@ const Lander = () => {
         draggable
         pauseOnHover
         theme="light"
-        className="mt-16"
+        className="mt-16 z-[3000]"
       />
 
       {/* Enhanced Header */}
-      <div
-        className={`absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-xl border-b border-gray-200/50 px-6 py-4 transition-all duration-300 ${
+      <header
+        className={`absolute top-0 left-0 right-0 z-[1000] bg-white/95 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-6 py-3.5 shadow-xs transition-all duration-300 ${
           isFullscreen ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link to="/home" className="group">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link to="/home" className="group flex items-center gap-3">
               <div className="relative">
                 <img
                   src="/favicon.svg"
-                  className="h-14 w-14 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3"
+                  className="h-10 w-10 sm:h-11 sm:w-11 transition-all duration-300 group-hover:scale-105"
                   alt="Logo"
                 />
-                <div className="absolute -inset-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              </div>
+              <div className="hidden md:block">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-base font-bold text-slate-800 leading-none">
+                    Tracking: {vehicle.name}
+                  </h1>
+                  <span className="flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Unit ID: <code className="font-mono text-green-700 bg-green-50 px-1 py-0.2 rounded border border-green-200">{vehicleId}</code>
+                </p>
               </div>
             </Link>
-
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-clip-text text-transparent">
-                Live Tracking • {vehicle.name}
-              </h1>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-700">Live Updates Active</span>
-                </div>
-                <span className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded-full">
-                  ID: {vehicleId?.slice(-6)}
-                </span>
-              </div>
-            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={refreshData}
-              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-300 hover:rotate-180"
+              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer shadow-xs"
               title="Refresh"
             >
-              <RefreshCw size={18} className="text-gray-700" />
+              <RefreshCw size={16} />
             </button>
             <button
               onClick={toggleFullscreen}
-              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-300"
+              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer shadow-xs"
               title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
             >
               {isFullscreen ? (
-                <Minimize2 size={18} className="text-gray-700" />
+                <Minimize2 size={16} />
               ) : (
-                <Maximize2 size={18} className="text-gray-700" />
+                <Maximize2 size={16} />
               )}
             </button>
             <button
               onClick={openDirections}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-5 py-2.5 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+              className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 px-4 py-2 text-white rounded-xl text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
             >
-              <Navigation size={18} />
-              Get Directions
+              <Navigation size={15} />
+              <span>Get Directions</span>
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Enhanced Vehicle Info Panel */}
       <div
-        className={`absolute top-22 left-15 z-[1000] bg-white/90 backdrop-blur-xl rounded-md shadow-2xl border border-gray-200/30 p-6 w-84 transition-all duration-300 ${
+        className={`absolute top-20 left-4 sm:left-6 z-[1000] bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 p-5 sm:p-6 w-[320px] sm:w-[360px] max-w-[calc(100vw-32px)] transition-all duration-300 ${
           isFullscreen ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-3.5 mb-5">
           <div
-            className="p-3 rounded-xl shadow-lg"
+            className="p-3 rounded-2xl shadow-xs shrink-0 text-white flex items-center justify-center"
             style={{ background: config.gradient }}
           >
-            {vehicleTypeIcons[vehicle.type] || vehicleTypeIcons.car}
+            <div className="w-6 h-6 flex items-center justify-center text-white" dangerouslySetInnerHTML={{ __html: config.svg }} />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="font-bold text-2xl text-gray-900">{vehicle.name}</h2>
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+              <h2 className="font-bold text-lg text-slate-900 truncate">{vehicle.name}</h2>
+              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
                 {config.name}
               </span>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Signal size={12} className="text-green-500" />
-              <span className="text-sm text-gray-600">Connected • Live Tracking</span>
+            <div className="flex items-center gap-1.5 mt-0.5 text-xs text-green-700 font-medium">
+              <Signal size={12} className="text-green-600 animate-pulse" />
+              <span>Live Telematics Stream</span>
             </div>
           </div>
         </div>
 
         {/* Telemetry Metrics */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Gauge className="text-gray-600" size={16} />
-                <span className="text-xs font-medium text-gray-600">Speed</span>
-              </div>
-              <Radar size={14} className="text-blue-500" />
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 shadow-xs">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-slate-500">Speed</span>
+              <Gauge size={13} className="text-blue-600" />
             </div>
             <div className="flex items-baseline gap-1">
-              <p className="font-bold text-2xl text-gray-900">{vehicleMetrics.speed.toFixed(0)}</p>
-              <span className="text-xs text-gray-500">km/h</span>
+              <p className="font-black text-xl text-slate-900">{vehicleMetrics.speed.toFixed(0)}</p>
+              <span className="text-[10px] text-slate-400">km/h</span>
+            </div>
+          </div>
+          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 shadow-xs">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-slate-500">Battery</span>
+              <Radar size={13} className="text-green-600" />
+            </div>
+            <div className="flex items-baseline gap-1">
+              <p className="font-black text-xl text-slate-900">{vehicleMetrics.battery.toFixed(0)}</p>
+              <span className="text-[10px] text-slate-400">%</span>
             </div>
           </div>
         </div>
 
         {/* Live Coordinates */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <MapPin className="text-green-600" size={18} />
-            </div>
-            <h3 className="font-semibold text-gray-800">Live Location</h3>
-            <Satellite size={14} className="text-gray-400 ml-auto" />
+        <div className="mb-4 bg-slate-50 rounded-2xl p-3.5 border border-slate-100 shadow-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1">
+              <MapPin size={13} className="text-green-600" /> Position
+            </span>
+            <Satellite size={13} className="text-slate-400" />
           </div>
-          <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl p-4 border border-blue-100 shadow-sm">
-            <div className="space-y-3">
-              <div>
-                <span className="text-xs font-medium text-gray-500 block mb-1">Latitude</span>
-                <div className="flex items-center gap-2">
-                  <code className="font-mono font-bold text-lg text-gray-900">
-                    {coords.lat.toFixed(6)}
-                  </code>
-                  <span className="text-xs text-gray-500">°N</span>
-                </div>
-              </div>
-              <div>
-                <span className="text-xs font-medium text-gray-500 block mb-1">Longitude</span>
-                <div className="flex items-center gap-2">
-                  <code className="font-mono font-bold text-lg text-gray-900">
-                    {coords.lng.toFixed(6)}
-                  </code>
-                  <span className="text-xs text-gray-500">°E</span>
-                </div>
-              </div>
-            </div>
+          <div className="font-mono text-xs font-bold text-slate-800 flex justify-between">
+            <span>{coords.lat.toFixed(5)}° N</span>
+            <span>{coords.lng.toFixed(5)}° E</span>
           </div>
         </div>
 
         {/* Actions & Status */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <Clock size={14} className="text-gray-500" />
-              <span className="text-gray-600">Last Updated</span>
+        <div className="space-y-3 pt-1">
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center gap-1.5">
+              <Clock size={13} className="text-slate-400" />
+              <span>Last Updated</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900">
-                {lastUpdate
-                  ? lastUpdate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                  : "--:--"}
-              </span>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            </div>
+            <span className="font-bold text-slate-800">
+              {lastUpdate
+                ? lastUpdate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "--:--"}
+            </span>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button
               onClick={shareTrackingLink}
-              className="flex-1 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 text-gray-800 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-[1.02] shadow-sm flex items-center justify-center gap-2 border border-gray-200"
+              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl font-semibold text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <Share2 size={16} />
-              Share
+              <Share2 size={14} />
+              <span>Share</span>
             </button>
             <button
               onClick={openDirections}
-              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-semibold text-xs transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <Navigation size={16} />
-              Navigate
+              <Navigation size={14} />
+              <span>Navigate</span>
             </button>
           </div>
         </div>
@@ -432,8 +418,8 @@ const Lander = () => {
           ref={mapRef}
         >
           <TileLayer
-            attribution='&copy; <a href="https://carto.com/">CARTO</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           />
 
           {/* Route History Paths */}

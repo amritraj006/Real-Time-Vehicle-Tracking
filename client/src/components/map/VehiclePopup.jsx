@@ -1,40 +1,48 @@
 import React from "react";
 import {
-  FaCar,
-  FaMotorcycle,
-  FaTruck,
-  FaBus,
-  FaWhatsapp,
-  FaCopy,
-  FaDirections,
-  FaExclamationTriangle,
-  FaTachometerAlt,
-  FaMapMarkerAlt,
-  FaClock,
-} from "react-icons/fa";
-import { Loader2 } from "lucide-react";
-import { useAppContext } from "../../contexts/AppContext";
+  Car,
+  Bike,
+  Truck,
+  Bus,
+  MapPin,
+  Clock,
+  Gauge,
+  Zap,
+  Navigation,
+  Share2,
+  Trash2,
+  ExternalLink,
+  Copy,
+  Activity,
+  BatteryCharging,
+  Compass,
+  Footprints,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAppContext } from "../../hooks/useAppContext";
+import { vehicleTypeData } from "../../constants/vehicleConfig";
 
 const vehicleIcons = {
-  car: <FaCar className="text-blue-600 text-lg" />,
-  bike: <FaMotorcycle className="text-red-600 text-lg" />,
-  truck: <FaTruck className="text-amber-600 text-lg" />,
-  bus: <FaBus className="text-emerald-600 text-lg" />,
+  car: <Car className="text-blue-500" size={18} />,
+  bike: <Bike className="text-red-500" size={18} />,
+  truck: <Truck className="text-amber-500" size={18} />,
+  bus: <Bus className="text-emerald-500" size={18} />,
 };
 
 /**
  * Interactive popup displayed when clicking a vehicle marker on the map.
  */
-const VehiclePopup = ({ vehicle, handleStop, isLoading }) => {
+const VehiclePopup = ({ vehicle, handleStop, isLoading, onFocus }) => {
   const { frontendUrl } = useAppContext();
+  const config = vehicleTypeData[vehicle.type] || vehicleTypeData.car;
 
-  const trackingURL = `${frontendUrl}/track/${vehicle.vehicleId}`;
-  const shareText = `🚗 *${vehicle.name}*\nTrack this vehicle live:\n${trackingURL}`;
+  const trackingURL = `${frontendUrl || window.location.origin}/track/${vehicle.vehicleId}`;
+  const shareText = `🚗 *${vehicle.name}*\nLive Telemetry Tracking:\n${trackingURL}`;
 
-  // Vehicle metrics for dashboard telemetry preview
-  const metrics = {
-    speed: Math.floor(Math.random() * 60) + 20,
-  };
+  const speed = vehicle.speed !== undefined ? Math.round(vehicle.speed) : 48;
+  const isMoving = speed > 2;
+  const battery = vehicle.battery !== undefined ? vehicle.battery : 84;
+  const heading = vehicle.heading !== undefined ? vehicle.heading : 120;
 
   const shareWhatsApp = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
@@ -42,7 +50,11 @@ const VehiclePopup = ({ vehicle, handleStop, isLoading }) => {
 
   const copyLocation = () => {
     navigator.clipboard.writeText(trackingURL);
-    alert("Tracking link copied to clipboard!");
+    if (window.toast) {
+      window.toast.success("📋 Tracking link copied!");
+    } else {
+      alert("Tracking link copied to clipboard!");
+    }
   };
 
   const openDirections = () => {
@@ -53,117 +65,131 @@ const VehiclePopup = ({ vehicle, handleStop, isLoading }) => {
   };
 
   return (
-    <div className="p-0 w-[280px] bg-white rounded-xl shadow-2xl shadow-gray-900/20 border border-gray-200 overflow-hidden">
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm">
-              {vehicleIcons[vehicle.type] || vehicleIcons.car}
+    <div className="w-[300px] p-0 font-sans bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800">
+      {/* Header Banner */}
+      <div
+        className="p-4 relative overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, ${config.color}ee, #1e293b)`,
+        }}
+      >
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl text-white shadow-xs">
+              {vehicleIcons[vehicle.type] || <Car size={18} />}
             </div>
             <div>
-              <h2 className="font-bold text-lg text-white">{vehicle.name}</h2>
-              <p className="text-gray-300 text-sm capitalize">{vehicle.type} • Live Tracking</p>
+              <h3 className="font-bold text-base text-white leading-tight">
+                {vehicle.name}
+              </h3>
+              <p className="text-[11px] text-white/80 capitalize font-medium">
+                {vehicle.type} Unit • ID: {vehicle.vehicleId.slice(-6)}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-emerald-400 font-medium">Online</span>
+
+          <div className="flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isMoving ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+              }`}
+            />
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider">
+              {isMoving ? "Moving" : "Idle"}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4">
-        {/* Location */}
-        <div className="mb-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100">
-          <div className="flex items-center gap-2 mb-2">
-            <FaMapMarkerAlt className="text-blue-600" />
-            <h3 className="font-semibold text-gray-800">Current Location</h3>
-          </div>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Latitude</span>
-              <span className="font-mono font-medium">{vehicle.lat.toFixed(6)}</span>
+      {/* Main Body */}
+      <div className="p-4 space-y-3.5 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+        
+        {/* Telemetry Metrics Row */}
+        <div className="grid grid-cols-3 gap-2">
+          {/* Speed */}
+          <div className="bg-gray-50 dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700/60 text-center">
+            <div className="flex items-center justify-center gap-1 text-gray-500 dark:text-gray-400 text-[10px] uppercase font-semibold mb-0.5">
+              <Gauge size={11} className="text-blue-500" /> Speed
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Longitude</span>
-              <span className="font-mono font-medium">{vehicle.lng.toFixed(6)}</span>
-            </div>
+            <p className="text-base font-extrabold text-gray-900 dark:text-white">
+              {speed} <span className="text-[10px] font-normal text-gray-500">km/h</span>
+            </p>
           </div>
-        </div>
 
-        {/* Vehicle Metrics Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <FaTachometerAlt className="text-gray-600 text-sm" />
-              <span className="text-xs text-gray-500">Speed</span>
+          {/* Battery / Fuel */}
+          <div className="bg-gray-50 dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700/60 text-center">
+            <div className="flex items-center justify-center gap-1 text-gray-500 dark:text-gray-400 text-[10px] uppercase font-semibold mb-0.5">
+              <BatteryCharging size={11} className="text-emerald-500" /> Battery
             </div>
-            <p className="font-bold text-gray-900">
-              {metrics.speed} <span className="text-xs font-normal text-gray-500">km/h</span>
+            <p className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+              {battery}%
+            </p>
+          </div>
+
+          {/* Heading Compass */}
+          <div className="bg-gray-50 dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700/60 text-center">
+            <div className="flex items-center justify-center gap-1 text-gray-500 dark:text-gray-400 text-[10px] uppercase font-semibold mb-0.5">
+              <Compass size={11} className="text-amber-500" /> Heading
+            </div>
+            <p className="text-base font-extrabold text-gray-900 dark:text-white font-mono">
+              {heading}°
             </p>
           </div>
         </div>
 
-        {/* Last Updated */}
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
-          <FaClock className="text-gray-400" />
-          Updated {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={copyLocation}
-              className="flex flex-col items-center justify-center p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors group disabled:opacity-70 disabled:cursor-not-allowed"
-              title="Copy tracking link"
-              disabled={isLoading}
-            >
-              <FaCopy className="text-gray-700 mb-1 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium text-gray-700">Copy</span>
-            </button>
-
-            <button
-              onClick={shareWhatsApp}
-              className="flex flex-col items-center justify-center p-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl transition-all shadow-sm hover:shadow group disabled:opacity-70 disabled:cursor-not-allowed"
-              title="Share via WhatsApp"
-              disabled={isLoading}
-            >
-              <FaWhatsapp className="mb-1 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium">WhatsApp</span>
-            </button>
-
-            <button
-              onClick={openDirections}
-              className="flex flex-col items-center justify-center p-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all shadow-sm hover:shadow group disabled:opacity-70 disabled:cursor-not-allowed"
-              title="Get directions"
-              disabled={isLoading}
-            >
-              <FaDirections className="mb-1 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium">Navigate</span>
-            </button>
+        {/* GPS Coordinates Pill */}
+        <div className="bg-blue-50/70 dark:bg-gray-800/60 p-2.5 rounded-xl border border-blue-100 dark:border-gray-700 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <MapPin size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+            <div className="font-mono text-[11px] text-gray-700 dark:text-gray-300">
+              {vehicle.lat.toFixed(5)}, {vehicle.lng.toFixed(5)}
+            </div>
           </div>
-
-          {/* Stop Button */}
           <button
-            onClick={() => handleStop(vehicle.vehicleId)}
-            disabled={isLoading}
-            className={`w-full flex items-center justify-center gap-2 ${
-              isLoading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-            } text-white py-3 rounded-xl font-medium transition-all shadow-sm hover:shadow disabled:hover:shadow-none`}
+            onClick={copyLocation}
+            title="Copy Coordinates / Link"
+            className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 cursor-pointer"
           >
-            {isLoading ? (
-              <Loader2 className="animate-spin" size={16} />
-            ) : (
-              <FaExclamationTriangle />
-            )}
-            {isLoading ? "Removing..." : "Stop Vehicle"}
+            <Copy size={13} />
           </button>
         </div>
+
+        {/* Action Buttons Grid */}
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <button
+            onClick={openDirections}
+            className="flex flex-col items-center justify-center p-2.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded-xl border border-blue-200 dark:border-blue-800/50 transition-all group cursor-pointer"
+          >
+            <Navigation size={15} className="mb-1 text-blue-600 group-hover:scale-110 transition-transform" />
+            <span className="text-[10px] font-bold">Directions</span>
+          </button>
+
+          <button
+            onClick={shareWhatsApp}
+            className="flex flex-col items-center justify-center p-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800/50 transition-all group cursor-pointer"
+          >
+            <Share2 size={15} className="mb-1 text-emerald-600 group-hover:scale-110 transition-transform" />
+            <span className="text-[10px] font-bold">WhatsApp</span>
+          </button>
+
+          <Link
+            to={`/track/${vehicle.vehicleId}`}
+            className="flex flex-col items-center justify-center p-2.5 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 rounded-xl border border-purple-200 dark:border-purple-800/50 transition-all group"
+          >
+            <ExternalLink size={15} className="mb-1 text-purple-600 group-hover:scale-110 transition-transform" />
+            <span className="text-[10px] font-bold">Telemetry</span>
+          </Link>
+        </div>
+
+        {/* Delete / Remove Vehicle */}
+        <button
+          onClick={() => handleStop(vehicle.vehicleId)}
+          disabled={isLoading}
+          className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold border border-red-200 dark:border-red-900/40 transition-all cursor-pointer disabled:opacity-50"
+        >
+          <Trash2 size={13} />
+          {isLoading ? "Stopping..." : "Stop & Remove Unit"}
+        </button>
       </div>
     </div>
   );

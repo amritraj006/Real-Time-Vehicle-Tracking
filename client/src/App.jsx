@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Home = lazy(() => import("./pages/Home"));
 const MapView = lazy(() => import("./pages/MapView"));
+const UserDashboard = lazy(() => import("./pages/UserDashboard"));
 const Lander = lazy(() => import("./pages/Lander"));
 const About = lazy(() => import("./pages/About"));
 const Community = lazy(() => import("./pages/Community"));
@@ -19,6 +20,11 @@ const App = () => {
         <Route path="/map" element={
           <ProtectedRoute>
             <MapView />
+          </ProtectedRoute>
+        } />
+        <Route path="/user-dashboard" element={
+          <ProtectedRoute>
+            <UserDashboard />
           </ProtectedRoute>
         } />
         <Route path="/track/:vehicleId" element={

@@ -6,6 +6,7 @@
 // --------------------------------------------------
 
 import { Server } from "socket.io";
+import { updateVehicleLocation } from "../services/vehicle.service.js";
 
 let io; // Shared Socket.IO instance
 
@@ -18,6 +19,7 @@ export const initSocket = (server) => {
         "https://real-time-vehicle-tracking-admin.onrender.com",
         "http://localhost:5173",
         "http://localhost:5174",
+        "http://localhost:3000",
       ],
       methods: ["GET", "POST"],
       allowedHeaders: ["Content-Type", "Authorization"],
@@ -25,7 +27,43 @@ export const initSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("🟢 Client connected:", socket.id);
+    console.log("🟢 Client connected for live tracking:", socket.id);
+
+    // Listen for real-time GPS location updates from open client devices
+    socket.on("updateLocation", async (data) => {
+      try {
+        const { vehicleId, lat, lng, speed, heading, userId } = data;
+        if (!vehicleId || lat === undefined || lng === undefined) return;
+
+        // Persist real-time location update in DB and cache
+        const updatedVehicle = await updateVehicleLocation({
+          vehicleId,
+          lat,
+          lng,
+          speed,
+          heading,
+          userId,
+        });
+
+        if (updatedVehicle) {
+          // Broadcast real location update to all connected clients & dashboards
+          io.emit("locationUpdate", {
+            vehicleId: updatedVehicle.vehicleId,
+            name: updatedVehicle.name,
+            type: updatedVehicle.type,
+            userId: updatedVehicle.userId,
+            lat: updatedVehicle.lat,
+            lng: updatedVehicle.lng,
+            speed: speed !== undefined ? speed : 0,
+            heading: heading !== undefined ? heading : 0,
+            route: updatedVehicle.route,
+            updatedAt: updatedVehicle.updatedAt,
+          });
+        }
+      } catch (err) {
+        console.error("❌ Error handling updateLocation socket event:", err.message);
+      }
+    });
 
     socket.on("disconnect", () => {
       console.log("🔴 Client disconnected:", socket.id);
